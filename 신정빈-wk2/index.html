@@ -1,0 +1,3177 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BIT Analysis</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root {
+      --ink: #121417;
+      --sub: #4d5661;
+      --muted: #747e8a;
+      --line: #dce3ea;
+      --soft: #f5f8fa;
+      --mint: #31c3b5;
+      --mint-soft: #e8fbf8;
+      --blue: #17345f;
+      --panel: #ffffff;
+      --shadow: 0 20px 60px rgba(17, 28, 45, .12);
+      --radius: 8px;
+      --max: 1160px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      color: var(--ink);
+      background: #fff;
+      letter-spacing: 0;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+      letter-spacing: 0;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(255, 255, 255, .94);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(14px);
+    }
+
+    .nav {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .brand-mark {
+      width: 28px;
+      height: 12px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--mint), #80dcd4);
+      box-shadow: 0 5px 14px rgba(49, 195, 181, .35);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 22px;
+      color: var(--sub);
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      min-height: 44px;
+      padding: 11px 15px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .btn.primary {
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink);
+    }
+
+    .btn.mint {
+      background: var(--mint);
+      border-color: var(--mint);
+      color: #062d2b;
+    }
+
+    .hero {
+      background: linear-gradient(180deg, #f8fbfc 0%, #ffffff 74%);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hero-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 70px 20px 58px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(420px, 500px);
+      gap: 48px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      color: #14998e;
+      font-size: 13px;
+      font-weight: 900;
+      text-transform: uppercase;
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 28px;
+      height: 4px;
+      border-radius: 3px;
+      background: var(--mint);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(42px, 6vw, 68px);
+      line-height: 1.02;
+      letter-spacing: 0;
+      max-width: 720px;
+    }
+
+    .hero-copy {
+      margin: 20px 0 0;
+      color: var(--sub);
+      font-size: 19px;
+      line-height: 1.7;
+      max-width: 640px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .output-system {
+      margin-top: 30px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .output-chip {
+      border-left: 3px solid var(--mint);
+      padding: 8px 10px;
+      background: #fff;
+      border-radius: 4px;
+    }
+
+    .output-chip strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .output-chip span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+      margin-top: 3px;
+    }
+
+    .preview-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+
+    .preview-card h2 {
+      margin: 0 0 12px;
+      font-size: 24px;
+    }
+
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .preview-table th,
+    .preview-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 11px 0;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .preview-table th {
+      width: 112px;
+      color: var(--blue);
+    }
+
+    .so-what {
+      margin-top: 16px;
+      padding: 14px;
+      background: var(--mint-soft);
+      border: 1px solid rgba(49, 195, 181, .38);
+      border-radius: 6px;
+      line-height: 1.65;
+      color: #173c3a;
+      font-weight: 800;
+    }
+
+    section {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 64px 20px;
+    }
+
+    .section-head {
+      max-width: 780px;
+      margin-bottom: 28px;
+    }
+
+    .section-head h2 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.16;
+    }
+
+    .section-head p {
+      margin: 0;
+      color: var(--sub);
+      line-height: 1.75;
+      font-size: 17px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .service-panel {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 22px;
+    }
+
+    .service-panel h3 {
+      margin: 0 0 12px;
+      font-size: 24px;
+    }
+
+    .service-panel p {
+      margin: 0 0 16px;
+      color: var(--sub);
+      line-height: 1.7;
+    }
+
+    .format-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .format-row {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 10px;
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+      line-height: 1.55;
+    }
+
+    .format-row span {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--ink);
+      color: #fff;
+      font-weight: 900;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .format-row strong {
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .format-row small {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .workspace-wrap {
+      background: #101820;
+      min-height: 100vh;
+      padding: 54px 20px 70px;
+    }
+
+    .workspace {
+      max-width: 1360px;
+      margin: 0 auto;
+      color: #fff;
+    }
+
+    .workspace-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .workspace-head h2 {
+      margin: 0 0 8px;
+      font-size: clamp(32px, 4vw, 48px);
+    }
+
+    .workspace-head p {
+      margin: 0;
+      color: rgba(255, 255, 255, .72);
+      line-height: 1.7;
+      max-width: 760px;
+    }
+
+    .app {
+      background: #f7f9fb;
+      color: var(--ink);
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,.2);
+      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, .33);
+      min-width: 0;
+    }
+
+    .app-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      padding: 14px 18px;
+    }
+
+    .app-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+    }
+
+    .app-title::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--mint);
+      box-shadow: 0 0 0 5px rgba(49, 195, 181, .15);
+    }
+
+    .app-grid {
+      display: grid;
+      grid-template-columns: minmax(280px, 330px) minmax(0, 1fr);
+      min-height: 780px;
+    }
+
+    .input-panel {
+      background: #fff;
+      border-right: 1px solid var(--line);
+      padding: 18px;
+      min-width: 0;
+    }
+
+    .result-panel {
+      padding: 18px;
+      background: #f7f9fb;
+      min-width: 0;
+    }
+
+    .mode-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .mode-btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 6px;
+      min-height: 44px;
+      font-weight: 900;
+    }
+
+    .mode-btn.active {
+      background: var(--mint-soft);
+      border-color: rgba(49, 195, 181, .55);
+      color: #073b38;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 900;
+      color: #39424e;
+    }
+
+    input,
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 6px;
+      padding: 11px 12px;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--mint);
+      box-shadow: 0 0 0 3px rgba(49, 195, 181, .14);
+    }
+
+    .side-note {
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      border-radius: 6px;
+      padding: 12px;
+      color: var(--sub);
+      line-height: 1.55;
+      font-size: 13px;
+      margin: 12px 0;
+    }
+
+    .report-shell {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 24px;
+      min-width: 0;
+    }
+
+    .report-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .badge {
+      background: #edf2f6;
+      border-radius: 999px;
+      padding: 6px 9px;
+      color: #51606e;
+      font-weight: 900;
+      font-size: 12px;
+    }
+
+    .report-title {
+      margin: 0 0 16px;
+      font-size: clamp(26px, 3.2vw, 38px);
+      line-height: 1.18;
+    }
+
+    .report-section {
+      border-top: 1px solid var(--line);
+      padding-top: 18px;
+      margin-top: 18px;
+    }
+
+    .report-section h3 {
+      margin: 0 0 12px;
+      color: var(--blue);
+      font-size: 20px;
+    }
+
+    .report-section p {
+      color: #344050;
+      line-height: 1.8;
+      margin: 0 0 12px;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+
+    .insight-box {
+      border-left: 4px solid var(--mint);
+      background: #f1fbf9;
+      padding: 13px 14px;
+      border-radius: 4px;
+      color: #173c3a;
+      line-height: 1.7;
+      font-weight: 800;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+
+    .report-copy {
+      display: grid;
+      gap: 10px;
+    }
+
+    .report-copy p {
+      margin: 0;
+    }
+
+    .report-subgrid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .report-note {
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      border-radius: 6px;
+      padding: 12px;
+      line-height: 1.65;
+      color: #344050;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+
+    .report-note b {
+      display: block;
+      color: var(--blue);
+      margin-bottom: 5px;
+      font-size: 13px;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+
+    .data-table th,
+    .data-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 11px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .data-table th {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .visual-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: 14px 0;
+    }
+
+    .visual-grid.single {
+      grid-template-columns: 1fr;
+    }
+
+    .graph-card {
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      border-radius: 6px;
+      padding: 14px;
+      min-width: 0;
+    }
+
+    .graph-card h4 {
+      margin: 0 0 4px;
+      font-size: 14px;
+      color: var(--blue);
+    }
+
+    .graph-card p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .trend-graph {
+      width: 100%;
+      min-height: 184px;
+    }
+
+    .trend-graph svg {
+      width: 100%;
+      height: 184px;
+      display: block;
+    }
+
+    .graph-label {
+      fill: #5d6875;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .graph-value {
+      fill: #26323f;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .graph-insight {
+      border-top: 1px solid var(--line);
+      margin-top: 10px;
+      padding-top: 10px;
+      display: grid;
+      gap: 7px;
+      color: #273342;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .graph-insight b {
+      color: var(--blue);
+      margin-right: 4px;
+    }
+
+    .company-summary-sheet {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      border: 2px solid #202936;
+      background: #fff;
+      margin-top: 8px;
+    }
+
+    .sheet-panel {
+      min-width: 0;
+      border-right: 2px solid #202936;
+    }
+
+    .sheet-panel:last-child {
+      border-right: 0;
+    }
+
+    .sheet-panel h4 {
+      margin: 0;
+      background: #315995;
+      color: #fff;
+      padding: 10px 12px;
+      text-align: center;
+      font-size: 14px;
+      letter-spacing: 0;
+    }
+
+    .sheet-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .sheet-list li {
+      border-top: 1px solid #cfd6de;
+      padding: 8px 10px;
+      color: #17202c;
+      font-size: 13px;
+      line-height: 1.45;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+
+    .sheet-list li.section-label {
+      font-weight: 900;
+      background: #f6f8fb;
+      color: #0e1724;
+    }
+
+    .financial-scroll {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      max-width: 100%;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .financial-scroll .data-table {
+      border: 0;
+      min-width: 760px;
+      margin: 0;
+    }
+
+    .chain-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .chain-grid.report-chain {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .chain-card {
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      border-radius: 6px;
+      padding: 13px;
+      line-height: 1.55;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+    }
+
+    .chain-card strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .chain-card small {
+      color: var(--sub);
+      font-size: 13px;
+      display: grid;
+      gap: 7px;
+    }
+
+    .chain-card small b {
+      display: block;
+      color: #26323f;
+      margin-bottom: 2px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .source-line {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 10px;
+    }
+
+    .company-tools {
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      border-radius: 6px;
+      padding: 12px;
+      margin: 12px 0;
+      display: grid;
+      gap: 10px;
+    }
+
+    .source-stack {
+      display: grid;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--sub);
+      line-height: 1.45;
+    }
+
+    .source-item {
+      border-left: 3px solid var(--mint);
+      background: #fff;
+      padding: 8px 9px;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin: 14px 0;
+    }
+
+    .metric-card {
+      border: 1px solid var(--line);
+      background: #fbfcfd;
+      border-radius: 6px;
+      padding: 12px;
+      min-height: 86px;
+    }
+
+    .metric-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+
+    .metric-card strong {
+      display: block;
+      font-size: 20px;
+      line-height: 1.25;
+    }
+
+    .metric-card small {
+      display: block;
+      color: var(--sub);
+      font-size: 12px;
+      line-height: 1.45;
+      margin-top: 6px;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .detail-panel {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 6px;
+      padding: 14px;
+      line-height: 1.65;
+    }
+
+    .detail-panel h4 {
+      margin: 0 0 8px;
+      color: var(--blue);
+      font-size: 15px;
+    }
+
+    .detail-panel ul {
+      margin: 0;
+      padding-left: 18px;
+      color: #344050;
+    }
+
+    .research-panel {
+      border: 1px solid rgba(49, 195, 181, .38);
+      background: #f1fbf9;
+      border-radius: 6px;
+      padding: 14px;
+      margin-top: 14px;
+      color: #173c3a;
+      line-height: 1.65;
+    }
+
+    .research-panel strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .empty-state {
+      border: 1px dashed #b9c6d2;
+      background: #fbfcfd;
+      border-radius: 6px;
+      padding: 18px;
+      color: var(--sub);
+      line-height: 1.65;
+    }
+
+    .loading {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(247, 250, 251, .96);
+      backdrop-filter: blur(16px);
+      padding: 20px;
+    }
+
+    .loading.active {
+      display: flex;
+    }
+
+    .loading-card {
+      width: min(520px, 100%);
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 26px;
+      box-shadow: var(--shadow);
+    }
+
+    .loading-card h2 {
+      margin: 0 0 8px;
+    }
+
+    .loading-card p {
+      margin: 0 0 18px;
+      color: var(--sub);
+      line-height: 1.6;
+    }
+
+    .load-line {
+      height: 9px;
+      background: #e6edf3;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .load-line span {
+      display: block;
+      height: 100%;
+      width: 45%;
+      background: linear-gradient(90deg, var(--mint), #1d6f9f);
+      animation: sweep 1.1s ease-in-out infinite;
+    }
+
+    @keyframes sweep {
+      0% { transform: translateX(-120%); }
+      100% { transform: translateX(240%); }
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 20px;
+      transform: translateX(-50%) translateY(120%);
+      opacity: 0;
+      visibility: hidden;
+      background: var(--ink);
+      color: #fff;
+      border-radius: 6px;
+      padding: 11px 14px;
+      font-weight: 900;
+      z-index: 80;
+      transition: .2s ease;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      visibility: visible;
+    }
+
+    footer {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 34px 20px 48px;
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    @media (max-width: 1100px) {
+      .hero-inner,
+      .app-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .input-panel {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+    }
+
+    @media (max-width: 780px) {
+      .nav-links {
+        display: none;
+      }
+
+      .hero-inner {
+        padding-top: 44px;
+      }
+
+      h1 {
+        font-size: 40px;
+      }
+
+      .hero-copy {
+        font-size: 16px;
+      }
+
+      .output-system,
+      .two-col,
+      .report-subgrid,
+      .visual-grid,
+      .company-summary-sheet,
+      .chain-grid,
+      .chain-grid.report-chain,
+      .metric-grid,
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .workspace-wrap {
+        padding: 28px 10px 48px;
+      }
+
+      .nav,
+      section {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .app-top,
+      .input-panel,
+      .result-panel,
+      .report-shell,
+      .preview-card,
+      .service-panel {
+        padding: 12px;
+      }
+
+      .sheet-panel {
+        border-right: 0;
+        border-bottom: 2px solid #202936;
+      }
+
+      .sheet-panel:last-child {
+        border-bottom: 0;
+      }
+
+      .sheet-panel h4 {
+        font-size: 12px;
+        padding: 9px 10px;
+      }
+
+      .sheet-list li,
+      .data-table,
+      .preview-table {
+        font-size: 12px;
+      }
+
+      .graph-card {
+        padding: 10px;
+      }
+
+      .trend-graph {
+        min-height: 168px;
+      }
+
+      .trend-graph svg {
+        height: 168px;
+      }
+
+      .financial-scroll .data-table {
+        min-width: 660px;
+      }
+
+      .workspace-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .app-top {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .hero-actions .btn {
+        width: 100%;
+      }
+
+      .actions .btn {
+        width: 100%;
+      }
+
+      .report-title {
+        font-size: 25px;
+      }
+
+      .report-section h3 {
+        font-size: 17px;
+        line-height: 1.35;
+      }
+
+      .report-shell {
+        padding: 18px;
+      }
+
+      footer {
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .nav {
+        gap: 10px;
+      }
+
+      .brand {
+        font-size: 13px;
+      }
+
+      .brand-mark {
+        width: 22px;
+      }
+
+      h1 {
+        font-size: 34px;
+      }
+
+      .workspace-head h2 {
+        font-size: 28px;
+      }
+
+      .app {
+        border-radius: 6px;
+      }
+
+      .preview-table tr {
+        display: block;
+        border-bottom: 1px solid var(--line);
+        padding: 8px 0;
+      }
+
+      .preview-table th,
+      .preview-table td {
+        display: block;
+        width: 100%;
+        border-bottom: 0;
+        padding: 4px 0;
+      }
+
+      .badge {
+        font-size: 11px;
+        padding: 5px 8px;
+      }
+
+      .financial-scroll .data-table {
+        min-width: 600px;
+      }
+    }
+
+    @media print {
+      @page {
+        size: A4;
+        margin: 14mm;
+      }
+
+      body.print-report {
+        background: #fff;
+        color: #111827;
+      }
+
+      body.print-report .topbar,
+      body.print-report #landing,
+      body.print-report .workspace-head,
+      body.print-report .app-top,
+      body.print-report .input-panel,
+      body.print-report .actions,
+      body.print-report .toast,
+      body.print-report .loading-screen {
+        display: none !important;
+      }
+
+      body.print-report #workspace,
+      body.print-report .workspace-wrap,
+      body.print-report .workspace,
+      body.print-report .app,
+      body.print-report .app-grid,
+      body.print-report .result-panel,
+      body.print-report .report-shell {
+        display: block !important;
+        min-height: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: #fff !important;
+        box-shadow: none !important;
+        color: #111827 !important;
+        overflow: visible !important;
+      }
+
+      body.print-report .report-meta,
+      body.print-report .report-section,
+      body.print-report .graph-card,
+      body.print-report .chain-card,
+      body.print-report .detail-panel,
+      body.print-report .research-panel,
+      body.print-report .insight-box {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      body.print-report .report-title {
+        font-size: 28px;
+        color: #111827;
+      }
+
+      body.print-report .report-section h3,
+      body.print-report .graph-card h4,
+      body.print-report .detail-panel h4 {
+        color: #0b4d78;
+      }
+
+      body.print-report .financial-scroll {
+        overflow: visible !important;
+        border: 0;
+      }
+
+      body.print-report .financial-scroll .data-table {
+        min-width: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <nav class="nav">
+      <a class="brand" href="#top"><span class="brand-mark"></span><span>BIT Analysis</span></a>
+      <div class="nav-links">
+        <a href="#services">서비스</a>
+        <a href="#format">산출물 포맷</a>
+        <a href="#workspace">워크스페이스</a>
+      </div>
+      <a class="btn primary" href="#workspace" data-open-workspace>분석 시작</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <div id="landing">
+      <section class="hero">
+        <div class="hero-inner">
+          <div>
+            <div class="eyebrow">Career research, not generic summaries</div>
+            <h1>산업과 기업을<br>4개 핵심 자료로<br>정리합니다</h1>
+            <p class="hero-copy">
+              BIT Analysis는 취준생이 산업분석과 기업분석을 시작할 때 봐야 할 자료를
+              <strong>산업 구조와 기업 재무를 분리한 리서치 산출물</strong>로 보여줍니다.
+              산업분석은 시장 구조와 성장 추이를, 기업분석은 DART 기반 재무 인사이트를 다룹니다.
+            </p>
+            <div class="hero-actions">
+              <a class="btn primary" href="#workspace" data-open-workspace>서비스 이용해보기</a>
+              <a class="btn mint" href="#format">결과물 포맷 보기</a>
+            </div>
+            <div class="output-system">
+              <div class="output-chip"><strong>1. 산업별 개요</strong><span>시장 정의와 핵심 변화</span></div>
+              <div class="output-chip"><strong>2. 밸류체인</strong><span>어디서 가치가 생기는지</span></div>
+              <div class="output-chip"><strong>3. Revenue/Cost</strong><span>돈을 버는 구조와 비용 구조</span></div>
+              <div class="output-chip"><strong>4. 시장/재무 인사이트</strong><span>산업은 시장 추이, 기업은 DART 재무</span></div>
+            </div>
+          </div>
+
+          <aside class="preview-card">
+            <div class="report-meta">
+              <span class="badge">Company Brief</span>
+              <span class="badge">삼성전자</span>
+              <span class="badge">FY2025</span>
+            </div>
+            <h2>결과물 예시</h2>
+            <table class="preview-table">
+              <tbody>
+                <tr>
+                  <th>산업별 개요</th>
+                  <td>AI 서버 수요가 메모리 수요의 질을 바꾸고 있으며, HBM 중심의 제품 믹스가 핵심 변수입니다.</td>
+                </tr>
+                <tr>
+                  <th>밸류체인</th>
+                  <td>설계/IP, 장비/소재, 제조, 패키징, 고객사로 이어지며 제조와 고부가 메모리에서 이익이 집중됩니다.</td>
+                </tr>
+                <tr>
+                  <th>Revenue/Cost</th>
+                  <td>매출은 메모리 가격과 출하량에 민감하고, 비용은 대규모 CAPEX와 감가상각이 좌우합니다.</td>
+                </tr>
+                <tr>
+                  <th>DART 재무</th>
+                  <td>FY2025 매출 333.6조원, EBIT 43.6조원, EBITDA 90.5조원. 순현금 구조로 투자 여력은 높습니다.</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="so-what">
+              핵심 해석: 삼성전자는 단순 매출 회복보다 HBM 비중 확대와 CAPEX 회수 가능성이 함께 중요합니다.
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="services">
+        <div class="section-head">
+          <h2>기업분석과 산업분석, 두 서비스로 나눕니다</h2>
+          <p>입력 항목과 결과물의 층위를 섞지 않습니다. 산업분석은 산업 구조를, 기업분석은 특정 회사의 재무와 전략적 위치를 설명합니다.</p>
+        </div>
+        <div class="two-col">
+          <article class="service-panel">
+            <h3>산업분석</h3>
+            <p>산업명과 분석 범위를 입력하면 AI가 증권사 리포트처럼 한 줄 결론, 업황 판단, 촉매, 밸류체인, 수익/비용 구조를 즉시 작성합니다.</p>
+            <div class="format-list">
+              <div class="format-row"><span>1</span><div><strong>Analyst View</strong><small>한 줄 결론, 업황 판단, 핵심 thesis</small></div></div>
+              <div class="format-row"><span>2</span><div><strong>Snapshot & Value Chain</strong><small>산업 정의, 핵심 변수, 가치 집중 구간</small></div></div>
+              <div class="format-row"><span>3</span><div><strong>Catalyst / Revenue-Cost</strong><small>뉴스 플로우와 실적 인과관계</small></div></div>
+              <div class="format-row"><span>4</span><div><strong>주요 기업과 해석 포인트</strong><small>주요 기업, 분석 포인트</small></div></div>
+            </div>
+          </article>
+
+          <article class="service-panel">
+            <h3>기업분석</h3>
+            <p>기업명을 입력하면 해당 기업이 속한 산업 구조 안에서 매출, EBIT, EBITDA, 안정성, 현금 창출력을 읽습니다.</p>
+            <div class="format-list">
+              <div class="format-row"><span>1</span><div><strong>산업별 개요</strong><small>회사가 노출된 시장과 성장 변수</small></div></div>
+              <div class="format-row"><span>2</span><div><strong>밸류체인</strong><small>회사 포지션과 경쟁우위가 생기는 위치</small></div></div>
+              <div class="format-row"><span>3</span><div><strong>Revenue/Cost 구조</strong><small>매출 동인, 비용 구조, 마진 민감도</small></div></div>
+              <div class="format-row"><span>4</span><div><strong>DART 재무 인사이트</strong><small>실제 재무 수치 기반 해석</small></div></div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="format">
+        <div class="section-head">
+          <h2>산출물 포맷은 항상 동일합니다</h2>
+          <p>산업분석과 기업분석은 서로 다른 업무입니다. 앞의 세 구조는 같게 유지하고, 네 번째 산출물만 분석 대상에 맞게 분리합니다.</p>
+        </div>
+        <div class="preview-card">
+          <table class="preview-table">
+            <tbody>
+              <tr>
+                <th>1. 산업별 개요</th>
+                <td>이 산업이 무엇이고, 지금 무엇이 바뀌고 있으며, 사용자가 가장 먼저 봐야 할 변수는 무엇인지 정리합니다.</td>
+              </tr>
+              <tr>
+                <th>2. 밸류체인</th>
+                <td>공급자, 제조/운영, 채널, 고객으로 이어지는 구조와 가치가 집중되는 구간을 보여줍니다.</td>
+              </tr>
+              <tr>
+                <th>3. Revenue/Cost 구조</th>
+                <td>매출을 만드는 방식, 비용이 발생하는 위치, 마진을 흔드는 변수를 연결합니다.</td>
+              </tr>
+              <tr>
+                <th>4. 시장 추이 / DART 재무 인사이트</th>
+                <td>산업분석은 시장 규모와 성장 추이, 기업분석은 매출액, EBIT, EBITDA, 안정성, 현금 창출력을 바탕으로 핵심 해석을 제공합니다.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <div class="workspace-wrap hidden" id="workspace">
+      <div class="workspace">
+        <div class="workspace-head">
+          <div>
+            <h2>BIT Analysis Workspace</h2>
+            <p>산업 또는 기업을 입력하면 같은 네 가지 포맷으로 분석합니다. 목표는 사용자가 "무엇을 봐야 하는지"를 바로 얻는 것입니다.</p>
+          </div>
+          <button class="btn" id="backBtn">소개로 돌아가기</button>
+        </div>
+
+        <div class="app">
+          <div class="app-top">
+            <div class="app-title">Analysis Builder</div>
+            <div class="report-meta">
+              <span class="badge">산업별 개요</span>
+              <span class="badge">밸류체인</span>
+              <span class="badge">Revenue/Cost</span>
+              <span class="badge">시장/재무 인사이트</span>
+            </div>
+          </div>
+
+          <div class="app-grid">
+            <aside class="input-panel">
+              <div class="mode-tabs">
+                <button class="mode-btn active" data-mode="industry">산업분석</button>
+                <button class="mode-btn" data-mode="company">기업분석</button>
+              </div>
+
+              <div class="field" id="industryField">
+                <label for="industryName">산업명</label>
+                <input id="industryName" placeholder="예: AI 반도체, 조선, K-뷰티">
+              </div>
+
+              <div class="field hidden" id="companyField">
+                <label for="companyName">기업명</label>
+                <input id="companyName" placeholder="예: 삼성전자, 현대자동차">
+              </div>
+
+              <div class="field" id="scopeField">
+                <label for="scope">분석 범위</label>
+                <select id="scope">
+                  <option value="" selected>분석 범위 선택</option>
+                  <option>국내</option>
+                  <option>글로벌</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="period">분석 기간</label>
+                <select id="period">
+                  <option value="" selected>분석 기간 선택</option>
+                  <option>최근 5개년</option>
+                  <option>최근 3개년</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="reportType">리포트 유형</label>
+                <select id="reportType">
+                  <option value="" selected>리포트 유형 선택</option>
+                  <option>요약 Brief</option>
+                  <option>상세 분석</option>
+                  <option>심층 분석</option>
+                </select>
+              </div>
+
+              <div class="side-note" id="dartStatus">
+                기업분석에서 기업명을 입력하면 DART 재무 인사이트가 채워집니다. 산업분석에는 특정 기업 재무를 임의로 넣지 않습니다.
+              </div>
+
+              <div class="company-tools hidden" id="companyTools">
+                <div class="field">
+                  <label for="baseYear">DART 기준 사업연도</label>
+                  <input id="baseYear" inputmode="numeric" value="2025" aria-label="DART 기준 사업연도">
+                </div>
+                <div class="source-stack" id="companySourceStack">
+                  <div class="source-item">상세 분석 생성 시 OpenDART 5개년 재무와 시장 데이터 보완값을 함께 조회합니다.</div>
+                </div>
+              </div>
+
+              <div class="actions">
+                <button class="btn primary" id="generateBtn">분석 생성</button>
+                <button class="btn" id="copyBtn">Markdown 복사</button>
+              </div>
+            </aside>
+
+            <section class="result-panel">
+              <article class="report-shell">
+                <div class="report-meta" id="reportMeta"></div>
+                <h2 class="report-title" id="reportTitle"></h2>
+
+                <div class="report-section">
+                  <h3 id="sectionOneTitle">1. 산업별 개요</h3>
+                  <p id="overviewText"></p>
+                  <div class="insight-box" id="overviewInsight"></div>
+                </div>
+
+                <div class="report-section">
+                  <h3 id="sectionTwoTitle">2. 밸류체인</h3>
+                  <div class="chain-grid" id="chainGrid"></div>
+                  <div class="insight-box" id="chainInsight"></div>
+                </div>
+
+                <div class="report-section">
+                  <h3 id="sectionThreeTitle">3. Revenue / Cost 구조</h3>
+                  <table class="data-table">
+                    <thead>
+                      <tr><th>구분</th><th>핵심 자료</th><th>해석</th></tr>
+                    </thead>
+                    <tbody id="revenueCostBody"></tbody>
+                  </table>
+                </div>
+
+                <div class="report-section">
+                  <h3 id="sectionFourTitle">4. 시장 규모 및 성장 추이</h3>
+                  <div class="visual-grid" id="graphGrid">
+                    <div class="graph-card">
+                      <h4 id="graphOneTitle">시장 규모 성장 추이</h4>
+                      <p id="graphOneCaption">시장 규모</p>
+                      <div class="trend-graph" id="ebitdaChart"></div>
+                    </div>
+                    <div class="graph-card">
+                      <h4 id="graphTwoTitle">수요 동인 변화</h4>
+                      <p id="graphTwoCaption">수요 변화</p>
+                      <div class="trend-graph" id="cashFlowChart"></div>
+                    </div>
+                  </div>
+                  <div class="financial-scroll" id="financialWrap">
+                    <table class="data-table" id="financialTable">
+                      <thead>
+                        <tr><th>지표</th><th>최근 값</th><th>해석</th></tr>
+                      </thead>
+                      <tbody id="financialBody"></tbody>
+                    </table>
+                  </div>
+                  <div class="metric-grid hidden" id="valuationGrid"></div>
+                  <div class="detail-grid hidden" id="companyDetailGrid"></div>
+                  <div class="research-panel hidden" id="marketResearchPanel"></div>
+                  <div class="insight-box" id="financialInsight"></div>
+                  <div class="source-line" id="sourceLine"></div>
+                </div>
+
+                <div class="actions">
+                  <button class="btn primary" id="downloadBtn">리포트 내려받기</button>
+                  <button class="btn" id="briefToggleBtn">요약 Brief로 보기</button>
+                </div>
+              </article>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <strong>BIT Analysis</strong>
+    <span>Independent industry research and company financial insight for job preparation.</span>
+  </footer>
+
+  <div class="loading" id="loading">
+    <div class="loading-card">
+      <div class="eyebrow">BIT Analysis</div>
+      <h2>4개 분석 자료를 구성하는 중</h2>
+      <p>산업분석은 시장 구조를, 기업분석은 DART 재무를 기준으로 독립 정리합니다.</p>
+      <div class="load-line"><span></span></div>
+      <div class="load-line"><span style="animation-delay:.18s;"></span></div>
+      <div class="load-line"><span style="animation-delay:.34s;"></span></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">복사되었습니다.</div>
+
+  <script>
+    const state = {
+      mode: "industry",
+      markdown: "",
+      brief: false,
+      companyFinancials: null,
+      selectedCompany: null,
+      loadingCompany: false,
+      industryAnalysis: null,
+      industryRequestKey: ""
+    };
+    const API_BASE = location.protocol === "file:" ? "http://127.0.0.1:3010" : "";
+
+    const financials = {
+      "삼성전자": {
+        source: "DART 사업보고서 연결 기준, FY2021-FY2025 샘플 데이터",
+        revenue: "333.6조원",
+        ebit: "43.6조원",
+        ebitda: "90.5조원",
+        netDebt: "-33.8조원",
+        cfo: "85.3조원",
+        stability: "순현금 구조",
+        ebitdaSeries: [85.9, 82.5, 45.2, 75.4, 90.5],
+        cfoSeries: [65.1, 62.2, 44.1, 73.0, 85.3],
+        insight: "FY2025 기준 매출과 EBIT가 회복됐지만 핵심은 단순 반등이 아니라 HBM/AI 서버향 제품 믹스가 EBITDA 마진을 얼마나 유지시키는지입니다. 순현금 구조와 높은 영업현금흐름은 대규모 CAPEX를 버틸 수 있는 체력을 의미합니다."
+      },
+      "현대자동차": {
+        source: "DART 사업보고서 연결 기준, 서비스 연동 시 자동 갱신 대상",
+        revenue: "약 175조원대",
+        ebit: "약 15조원대",
+        ebitda: "약 20조원대",
+        netDebt: "자동차 금융 포함 확인 필요",
+        cfo: "영업현금흐름 양호",
+        stability: "판매 믹스와 금융부문 영향 확인 필요",
+        ebitdaSeries: [15.1, 16.4, 18.8, 20.6, 21.4],
+        cfoSeries: [7.8, 10.6, 11.3, 12.5, 13.2],
+        insight: "현대자동차는 판매량보다 SUV/제네시스/전동화 믹스가 마진을 좌우합니다. 자동차 금융을 포함한 부채 구조는 단순 제조업 부채비율로 해석하면 왜곡될 수 있습니다."
+      },
+      "SK하이닉스": {
+        source: "DART 사업보고서 연결 기준, 서비스 연동 시 자동 갱신 대상",
+        revenue: "AI 메모리 수요로 회복",
+        ebit: "HBM 중심 개선",
+        ebitda: "감가상각 부담 반영 필요",
+        netDebt: "투자 사이클 영향 큼",
+        cfo: "메모리 가격에 민감",
+        stability: "업황 사이클 민감",
+        ebitdaSeries: [20.9, 24.7, 5.9, 29.6, 41.2],
+        cfoSeries: [19.8, 14.8, 4.3, 18.7, 32.1],
+        insight: "SK하이닉스의 핵심은 HBM 선도 지위가 메모리 업황 사이클을 얼마나 완충하는지입니다. 단순 매출 회복보다 고객사 락인과 CAPEX 부담이 함께 중요합니다."
+      }
+    };
+
+    const companyAliases = {
+      [normalizeText("삼전")]: "삼성전자",
+      [normalizeText("삼성 전자")]: "삼성전자",
+      [normalizeText("Samsung Electronics")]: "삼성전자",
+      [normalizeText("현대차")]: "현대자동차",
+      [normalizeText("현대 자동차")]: "현대자동차",
+      [normalizeText("Hyundai Motor")]: "현대자동차",
+      [normalizeText("SK 하이닉스")]: "SK하이닉스",
+      [normalizeText("하이닉스")]: "SK하이닉스",
+      [normalizeText("SK Hynix")]: "SK하이닉스"
+    };
+
+    const companyProfiles = {
+      "삼성전자": {
+        overview: "삼성전자는 메모리 반도체와 모바일/가전 완제품을 동시에 보유한 종합 IT 제조사입니다. 이익 변동성은 DS부문, 특히 DRAM/NAND/HBM 가격과 출하량에서 크게 나오고, MX·VD/가전·Harman은 브랜드와 완제품 판매 기반의 방어적 현금흐름을 보탭니다.",
+        chain: [
+          ["DS 메모리", "DRAM, NAND, HBM을 데이터센터·모바일·PC 고객에 공급. 가격 사이클과 고부가 HBM 믹스가 이익을 좌우합니다."],
+          ["파운드리/시스템LSI", "모바일 AP, 이미지센서, 선단공정 위탁생산. 수율·가동률·대형 고객 확보가 핵심입니다."],
+          ["DX 완제품", "Galaxy 스마트폰, TV, 생활가전. 프리미엄 제품 믹스와 교체 수요가 매출 안정성을 만듭니다."],
+          ["디스플레이/Harman", "OLED 패널과 전장·오디오 사업. 모바일 OLED와 커넥티드카 수요가 보조 성장축입니다."]
+        ],
+        chainInsight: "핵심 해석: 삼성전자는 단일 반도체 회사가 아니라 메모리 업사이클의 이익 레버리지와 완제품 사업의 현금 방어력을 동시에 가진 구조입니다. 따라서 분석의 초점은 '매출 규모'보다 DS 이익 회복이 DX의 안정적 현금흐름과 결합해 CAPEX를 감당할 수 있는지에 있습니다.",
+        revenueCost: [
+          ["Revenue", "메모리 가격×출하량, HBM 공급 확대, 스마트폰 ASP/출하량, OLED 패널 수요", "HBM 비중이 올라가면 같은 매출 성장에서도 EBIT 개선 폭이 커질 수 있습니다."],
+          ["Cost", "웨이퍼/소재, 선단공정 CAPEX, 감가상각비, R&D, 마케팅비", "반도체 고정비가 커서 업황 하락기에는 매출 감소보다 이익 감소가 더 크게 나타납니다."],
+          ["Margin driver", "HBM 믹스, DRAM/NAND 가격, 파운드리 수율, 프리미엄 스마트폰 믹스", "마진의 지속성은 가격 반등보다 고부가 제품 비중과 수율 안정화가 결정합니다."]
+        ],
+        questions: ["HBM에서 SK하이닉스와의 격차를 얼마나 줄일 수 있는가?", "파운드리 적자가 DS 전체 수익성 회복을 얼마나 깎는가?", "대규모 CAPEX가 다음 업사이클에서 EBITDA로 회수되는가?"]
+      },
+      "SK하이닉스": {
+        overview: "SK하이닉스는 DRAM, NAND, HBM 중심의 메모리 반도체 회사입니다. 완제품 사업이 거의 없기 때문에 실적은 메모리 가격, 서버/AI 고객 수요, CAPEX 사이클에 매우 민감합니다.",
+        chain: [
+          ["DRAM/HBM", "서버·AI 가속기·PC·모바일용 메모리. HBM 고객 인증과 선단 패키징 역량이 핵심입니다."],
+          ["NAND", "SSD와 모바일 저장장치. 가격 경쟁과 재고 조정에 따라 수익성이 크게 흔들립니다."],
+          ["고객", "클라우드, AI 반도체, PC·모바일 OEM. 대형 고객 물량 확보가 가동률을 결정합니다."],
+          ["투자/생산", "웨이퍼 팹, EUV, 패키징 투자. 선제 CAPEX는 호황기 레버리지와 불황기 부담을 동시에 만듭니다."]
+        ],
+        chainInsight: "핵심 해석: SK하이닉스는 HBM에서 프리미엄을 확보하면 메모리 사이클 기업에서 AI 인프라 핵심 공급자로 재평가될 수 있지만, NAND와 CAPEX 부담이 하방 리스크입니다.",
+        revenueCost: [
+          ["Revenue", "DRAM/HBM ASP, bit growth, 고객 인증 물량, NAND 가격", "HBM 매출 비중이 올라갈수록 전통 DRAM 가격 사이클 의존도가 낮아집니다."],
+          ["Cost", "감가상각비, EUV/패키징 투자, 전력·소재비, 재고평가손실", "업황 저점에서는 고정비와 재고 손실이 EBIT를 급격히 훼손합니다."],
+          ["Margin driver", "HBM 수율, 고객 락인, 가동률, NAND 구조조정", "수익성 개선이 지속되려면 가격 반등보다 HBM 믹스와 수율이 먼저 확인돼야 합니다."]
+        ],
+        questions: ["HBM 선도 지위가 몇 년 유지될 수 있는가?", "NAND 손익 개선이 전체 마진을 얼마나 보탤 수 있는가?", "CAPEX 확대가 순차입금 부담으로 전이되는가?"]
+      },
+      "현대자동차": {
+        overview: "현대자동차는 자동차 제조, 판매, 금융, AS를 결합한 글로벌 완성차 회사입니다. 수익성은 판매량보다 SUV·제네시스·하이브리드/전기차 믹스, 지역별 인센티브, 환율, 금융부문 리스크에 좌우됩니다.",
+        chain: [
+          ["차량 제조", "내연기관, 하이브리드, 전기차, 제네시스. 플랫폼 공용화와 생산 효율이 원가를 좌우합니다."],
+          ["판매/유통", "국내외 딜러망과 법인 판매. 미국·유럽 등 핵심 시장의 인센티브가 마진 변수입니다."],
+          ["금융", "할부·리스·딜러 금융. 판매를 지원하지만 금리와 잔존가치 리스크를 동반합니다."],
+          ["AS/부품", "정비, 부품, 서비스 네트워크. 차량 운행 대수가 늘수록 반복 매출 기반이 커집니다."]
+        ],
+        chainInsight: "핵심 해석: 현대차는 단순 판매대수보다 고마진 차종 믹스와 금융부문 건전성이 중요합니다. 자동차 금융 부채를 제조업 차입금처럼 해석하면 안정성을 과소평가하거나 과대평가할 수 있습니다.",
+        revenueCost: [
+          ["Revenue", "판매대수, ASP, SUV/제네시스 믹스, 지역별 환율, 금융수익", "고가 차종 믹스가 유지되면 판매량 둔화에도 매출과 EBIT가 방어될 수 있습니다."],
+          ["Cost", "원재료, 배터리, 인건비, 품질보증비, 인센티브, 금융 조달비용", "인센티브 상승과 품질비용은 호황기에도 마진을 빠르게 깎습니다."],
+          ["Margin driver", "제네시스/SUV 비중, 하이브리드 수요, 환율, 금융 연체율", "전동화 전환기에는 EV 판매량보다 수익성 있는 믹스 전환이 더 중요합니다."]
+        ],
+        questions: ["미국 시장 인센티브 상승이 EBIT margin을 얼마나 압박하는가?", "하이브리드 강세가 EV 전환 속도 둔화를 보완하는가?", "금융부문 리스크를 제조업 현금흐름과 어떻게 분리할 것인가?"]
+      }
+    };
+
+    const industryTemplates = {
+      "AI 반도체": {
+        overview: "AI 반도체 산업은 최근 클라우드 사업자의 AI 서버 투자가 GPU에서 HBM, 첨단 패키징, 선단 파운드리 병목으로 확산되며 공급 제약 구간에 이익이 집중되는 상황입니다. 글로벌 범위에서는 NVIDIA의 플랫폼 지배력, SK하이닉스·삼성전자의 HBM 공급력, TSMC의 패키징 캐파가 동시에 중요합니다.",
+        overviewInsight: "핵심 해석: 이 산업의 이익은 'AI 수요가 크다'가 아니라 '고성능 메모리와 제조 병목을 누가 확보했는가'에서 갈립니다.",
+        chain: [
+          ["설계/IP", "GPU/ASIC 설계, IP, EDA"],
+          ["제조", "파운드리와 선단 공정"],
+          ["메모리/패키징", "HBM, CoWoS, 첨단 패키징"],
+          ["고객", "클라우드, AI 모델, 데이터센터"]
+        ],
+        chainInsight: "핵심 해석: 가치가 집중되는 구간은 설계와 병목 제조/패키징입니다. 취준 관점에서는 '수요 성장'보다 '병목 구간의 협상력'이 중요합니다.",
+        revenueCost: [
+          ["Revenue", "AI 서버 투자, GPU/HBM 판매, 파운드리 수주", "수요가 커져도 생산 병목이 있는 기업만 가격과 마진을 방어합니다."],
+          ["Cost", "CAPEX, 감가상각, 수율 안정화 비용, 첨단 패키징 투자", "고정비가 커서 업황 하락 시 마진 훼손이 빠르게 나타납니다."],
+          ["Margin driver", "제품 믹스, 수율, 고객 락인, 공급 부족", "HBM처럼 고부가 제품 비중이 높을수록 매출 성장보다 이익 개선 폭이 커집니다."]
+        ],
+        marketSeries: [100, 132, 171, 224, 292],
+        demandSeries: [100, 138, 196, 278, 390]
+      },
+      "조선": {
+        overview: "조선 산업은 선박 발주 사이클, 친환경 규제, LNG/암모니아 추진선 수요가 핵심 변수입니다. 글로벌 범위에서는 한국 조선사의 고부가 선종 경쟁력과 중국의 저가 수주 확대가 함께 작동합니다.",
+        overviewInsight: "핵심 해석: 조선은 수주잔고가 미래 매출을 설명하지만, 진짜 인사이트는 고마진 선종 비중과 후판가/인력비 부담이 마진을 얼마나 깎는지에 있습니다.",
+        chain: [
+          ["발주", "해운사, 에너지 기업, 방산/정부"],
+          ["설계", "선형 설계, 엔지니어링"],
+          ["건조", "조선소, 블록, 용접/인력"],
+          ["인도/AS", "납기, 보증, MRO"]
+        ],
+        chainInsight: "핵심 해석: 이익은 발주량보다 수주 시점의 가격, 고부가 선종 비중, 건조 비용 통제에서 결정됩니다.",
+        revenueCost: [
+          ["Revenue", "선박 수주, 해양플랜트, 방산/함정", "수주잔고의 질이 향후 2~3년 실적 가시성을 만듭니다."],
+          ["Cost", "후판가, 인건비, 외주비, 납기 지연 비용", "원가 상승분을 선가에 전가하지 못하면 호황에서도 마진이 약해집니다."],
+          ["Margin driver", "LNG선/특수선 비중, 환율, 생산성", "고부가 선종 중심일수록 중국 저가 경쟁을 피할 수 있습니다."]
+        ],
+        marketSeries: [100, 112, 128, 146, 160],
+        demandSeries: [100, 118, 137, 151, 168]
+      }
+    };
+
+    const industryAliases = {
+      [normalizeText("AI반도체")]: "AI 반도체",
+      [normalizeText("인공지능 반도체")]: "AI 반도체",
+      [normalizeText("HBM")]: "AI 반도체",
+      [normalizeText("GPU")]: "AI 반도체",
+      [normalizeText("반도체")]: "AI 반도체",
+      [normalizeText("shipbuilding")]: "조선",
+      [normalizeText("조선업")]: "조선",
+      [normalizeText("조선 산업")]: "조선"
+    };
+
+    const els = {
+      landing: document.getElementById("landing"),
+      workspace: document.getElementById("workspace"),
+      loading: document.getElementById("loading"),
+      toast: document.getElementById("toast"),
+      industryField: document.getElementById("industryField"),
+      companyField: document.getElementById("companyField"),
+      scopeField: document.getElementById("scopeField"),
+      industryName: document.getElementById("industryName"),
+      companyName: document.getElementById("companyName"),
+      scope: document.getElementById("scope"),
+      period: document.getElementById("period"),
+      reportType: document.getElementById("reportType"),
+      baseYear: document.getElementById("baseYear"),
+      companyTools: document.getElementById("companyTools"),
+      companySourceStack: document.getElementById("companySourceStack"),
+      reportMeta: document.getElementById("reportMeta"),
+      reportTitle: document.getElementById("reportTitle"),
+      sectionOneTitle: document.getElementById("sectionOneTitle"),
+      sectionTwoTitle: document.getElementById("sectionTwoTitle"),
+      sectionThreeTitle: document.getElementById("sectionThreeTitle"),
+      sectionFourTitle: document.getElementById("sectionFourTitle"),
+      overviewText: document.getElementById("overviewText"),
+      overviewInsight: document.getElementById("overviewInsight"),
+      chainGrid: document.getElementById("chainGrid"),
+      chainInsight: document.getElementById("chainInsight"),
+      revenueCostBody: document.getElementById("revenueCostBody"),
+      financialBody: document.getElementById("financialBody"),
+      valuationGrid: document.getElementById("valuationGrid"),
+      companyDetailGrid: document.getElementById("companyDetailGrid"),
+      marketResearchPanel: document.getElementById("marketResearchPanel"),
+      financialInsight: document.getElementById("financialInsight"),
+      sourceLine: document.getElementById("sourceLine"),
+      dartStatus: document.getElementById("dartStatus"),
+      graphOneTitle: document.getElementById("graphOneTitle"),
+      graphOneCaption: document.getElementById("graphOneCaption"),
+      graphTwoTitle: document.getElementById("graphTwoTitle"),
+      graphTwoCaption: document.getElementById("graphTwoCaption"),
+      graphGrid: document.getElementById("graphGrid"),
+      financialWrap: document.getElementById("financialWrap"),
+      financialTable: document.getElementById("financialTable"),
+      ebitdaChart: document.getElementById("ebitdaChart"),
+      cashFlowChart: document.getElementById("cashFlowChart")
+    };
+
+    function setMode(mode) {
+      state.mode = mode;
+      document.querySelectorAll("[data-mode]").forEach(button => {
+        button.classList.toggle("active", button.dataset.mode === mode);
+      });
+      els.industryField.classList.toggle("hidden", mode !== "industry");
+      els.companyField.classList.toggle("hidden", mode !== "company");
+      els.scopeField.classList.toggle("hidden", mode !== "industry");
+      els.companyTools.classList.toggle("hidden", mode !== "company");
+      els.dartStatus.textContent = mode === "industry"
+        ? "산업분석은 기업 DART 재무를 사용하지 않습니다. 산업 구조와 시장 흐름만 독립적으로 정리합니다."
+        : "기업명을 입력하고 분석 생성을 누르면 OpenDART 5개년 재무와 발행주식수/주가 보완값을 함께 조회합니다.";
+      document.getElementById("downloadBtn").textContent = "PDF 내려받기";
+      renderReport();
+    }
+
+    function openWorkspace() {
+      els.loading.classList.add("active");
+      window.setTimeout(() => {
+        els.landing.classList.add("hidden");
+        els.workspace.classList.remove("hidden");
+        els.loading.classList.remove("active");
+        window.location.hash = "workspace";
+        window.scrollTo({ top: 0, behavior: "auto" });
+        renderReport();
+      }, 850);
+    }
+
+    function closeWorkspace() {
+      els.workspace.classList.add("hidden");
+      els.landing.classList.remove("hidden");
+      history.replaceState(null, "", `${location.pathname}${location.search}`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function getIndustryData() {
+      const name = els.industryName.value.trim();
+      if (!name) return null;
+      const context = resolveIndustryInputContext(name);
+      const sampleKey = resolveIndustryTemplateKey(context.analysisIndustry) || resolveIndustryTemplateKey(name);
+      const displayName = sampleKey || context.analysisIndustry;
+      const data = industryTemplates[sampleKey] || {
+        overview: `${displayName} 산업은 최근 수요 성장과 비용 부담이 동시에 커지며, 산업 평균보다 밸류체인별 이익 격차가 확대되는 상황입니다. ${context.rationale} ${els.scope.value} 범위에서는 최종 시장 규모보다 가격 전가력과 공급 병목이 수익성을 가릅니다.`,
+        overviewInsight: `핵심 해석: ${displayName}의 핵심은 성장률이 아니라 성장의 이익이 어느 구간에 남는가입니다.`,
+        chain: [
+          ["공급", "원재료, 기술, 핵심 인프라"],
+          ["생산/운영", "제조, 서비스 운영, 품질 관리"],
+          ["채널", "유통, 플랫폼, 영업망"],
+          ["고객", "B2B/B2C 최종 수요"]
+        ],
+        chainInsight: "핵심 해석: 산업 매력도는 최종 수요보다 밸류체인 내 협상력과 전환 비용에서 갈립니다.",
+        revenueCost: [
+          ["Revenue", "판매량, 가격, 고객군, 반복 매출 여부", "반복 매출 여부가 성장의 질을 가릅니다."],
+          ["Cost", "고정비, 변동비, 인건비, CAPEX", "비용 구조가 무거울수록 경기 변동 시 이익 변동성이 커집니다."],
+          ["Margin driver", "가격 전가력, 규모의 경제, 제품 믹스", "마진 개선의 지속성은 가격보다 구조적 우위에서 나옵니다."]
+        ],
+        marketSeries: context.marketSeries || [10, 11.2, 12.6, 14.3, 16.1],
+        demandSeries: [100, 114, 131, 149, 170]
+      };
+      return { name: displayName, context, ...data };
+    }
+
+    function resolveIndustryTemplateKey(industry) {
+      const normalized = normalizeText(industry);
+      if (!normalized) return "";
+      if (industryAliases[normalized]) return industryAliases[normalized];
+      return Object.keys(industryTemplates).find(key => {
+        const normalizedKey = normalizeText(key);
+        return normalizedKey === normalized || normalizedKey.includes(normalized) || normalized.includes(normalizedKey);
+      }) || "";
+    }
+
+    function resolveIndustryInputContext(rawIndustry) {
+      const originalIndustry = String(rawIndustry || "").trim();
+      const normalized = normalizeText(originalIndustry.replace(/\s*산업\s*$/g, ""));
+      const rules = [
+        {
+          patterns: ["인형", "봉제완구", "완구인형", "plush", "doll", "stuffedtoy", "키덜트", "캐릭터굿즈"],
+          analysisIndustry: "완구 및 캐릭터 IP 굿즈",
+          parentIndustry: "완구, 봉제완구, 캐릭터 라이선싱 상품, 키덜트 수집형 굿즈",
+          segments: ["유아동 완구", "봉제완구·플러시 토이", "패션/수집형 인형", "캐릭터 IP 라이선싱 상품", "키덜트·팬덤 굿즈"],
+          keywords: ["완구 산업", "봉제완구", "인형 시장", "캐릭터 상품", "plush toy market", "doll market", "licensed character merchandise"],
+          marketUnit: "글로벌 완구/캐릭터 상품 시장 규모 추정치, 십억 달러",
+          marketSeries: [103, 108, 114, 121, 129],
+          rationale: "입력 산업명이 세부 품목에 가까워 완구·캐릭터 IP 굿즈를 상위 시장으로 두고, 해당 품목을 세부 세그먼트로 분석합니다."
+        },
+        {
+          patterns: ["문구", "팬시", "스티커", "다꾸", "stationery", "fancygoods"],
+          analysisIndustry: "문구 및 팬시 굿즈",
+          parentIndustry: "문구, 팬시상품, 캐릭터 굿즈, 오피스·학습용품",
+          segments: ["학습·사무 문구", "다이어리/꾸미기 용품", "캐릭터 팬시상품", "온라인 소량 브랜드", "B2B 오피스 소모품"],
+          keywords: ["문구 산업", "팬시 산업", "다꾸 시장", "stationery market", "fancy goods market"],
+          marketUnit: "문구 및 팬시상품 시장 규모 추정치, 조원 또는 십억 달러",
+          marketSeries: [7.8, 8.1, 8.5, 8.9, 9.4],
+          rationale: "입력 산업명이 세부 소비재에 가까워 문구·팬시·캐릭터 굿즈를 상위 시장으로 확장합니다."
+        },
+        {
+          patterns: ["피규어", "collectible", "collectibles", "트레이딩카드", "tcg", "보드게임"],
+          analysisIndustry: "수집형 취미 및 테이블탑 게임",
+          parentIndustry: "키덜트 취미재, 피규어, TCG, 보드게임, 팬덤 커머스",
+          segments: ["피규어/스태츄", "트레이딩 카드", "보드게임", "팬덤 한정판", "중고·리셀 플랫폼"],
+          keywords: ["키덜트 시장", "피규어 시장", "트레이딩 카드 게임", "collectibles market", "tabletop games market"],
+          marketUnit: "수집형 취미재 시장 규모 추정치, 십억 달러",
+          marketSeries: [28, 31, 35, 39, 44],
+          rationale: "입력 산업명이 팬덤형 취미 세그먼트에 가까워 수집형 취미재와 리셀/한정판 시장까지 함께 분석합니다."
+        },
+        {
+          patterns: ["향수", "디퓨저", "캔들", "fragrance", "perfume", "homefragrance"],
+          analysisIndustry: "프래그런스 및 홈센트",
+          parentIndustry: "퍼스널 프래그런스, 홈 프래그런스, 니치 향수, 라이프스타일 소비재",
+          segments: ["니치 향수", "매스 프래그런스", "디퓨저/캔들", "라이프스타일 편집숍", "온라인 D2C 브랜드"],
+          keywords: ["향수 시장", "니치 향수", "디퓨저 시장", "fragrance market", "perfume market"],
+          marketUnit: "프래그런스 시장 규모 추정치, 십억 달러",
+          marketSeries: [56, 59, 63, 67, 72],
+          rationale: "입력 산업명이 세부 향 제품에 가까워 프래그런스와 홈센트 상위 시장으로 확장합니다."
+        },
+        {
+          patterns: ["캠핑", "등산", "아웃도어", "outdoor", "camping", "hiking"],
+          analysisIndustry: "아웃도어 및 캠핑용품",
+          parentIndustry: "아웃도어 의류, 캠핑 장비, 레저용품, 체험형 여가 소비",
+          segments: ["아웃도어 의류", "캠핑 장비", "등산/트레킹 용품", "렌탈·중고 장비", "레저 플랫폼"],
+          keywords: ["캠핑 산업", "아웃도어 시장", "등산용품", "outdoor gear market", "camping equipment market"],
+          marketUnit: "아웃도어/캠핑용품 시장 규모 추정치, 십억 달러",
+          marketSeries: [78, 82, 86, 90, 95],
+          rationale: "입력 산업명이 취미 장비 세그먼트에 가까워 아웃도어 레저용품 시장으로 확장합니다."
+        },
+        {
+          patterns: ["반려", "펫", "강아지", "고양이", "petcare", "petfood", "pet"],
+          analysisIndustry: "펫케어 및 반려동물 용품/서비스",
+          parentIndustry: "펫푸드, 반려동물 용품, 동물병원, 펫보험, 돌봄 서비스",
+          segments: ["펫푸드", "용품/장난감", "동물병원/의료", "펫보험", "미용·호텔·돌봄"],
+          keywords: ["펫케어 산업", "반려동물 시장", "펫푸드 시장", "pet care market", "pet food market"],
+          marketUnit: "펫케어 시장 규모 추정치, 십억 달러",
+          marketSeries: [255, 270, 287, 306, 327],
+          rationale: "입력 산업명이 반려동물 세부 품목에 가까워 펫케어 생태계로 확장합니다."
+        },
+        {
+          patterns: ["디저트", "베이커리", "빵", "케이크", "커피", "카페", "bakery", "dessert", "coffee"],
+          analysisIndustry: "디저트·베이커리 및 카페 F&B",
+          parentIndustry: "외식, 베이커리, 카페, 디저트 전문점, 간편식/프랜차이즈",
+          segments: ["프랜차이즈 카페", "베이커리", "디저트 전문점", "RTD/간편 디저트", "배달·온라인 예약"],
+          keywords: ["디저트 시장", "베이커리 산업", "카페 시장", "bakery market", "dessert market"],
+          marketUnit: "디저트/베이커리 F&B 시장 규모 추정치, 조원 또는 십억 달러",
+          marketSeries: [42, 45, 48, 52, 56],
+          rationale: "입력 산업명이 F&B 세부 품목에 가까워 외식·베이커리·카페 시장으로 확장합니다."
+        }
+      ];
+      const matched = rules.find(rule => rule.patterns.some(pattern => normalized.includes(normalizeText(pattern))));
+      if (matched) return { originalIndustry, isReframed: true, ...matched };
+      const cleanIndustry = originalIndustry.replace(/\s*산업\s*$/g, "").trim() || originalIndustry;
+      const broadPattern = /(자동차|반도체|조선|철강|은행|보험|증권|게임|바이오|제약|화장품|유통|물류|항공|호텔|건설|부동산|통신|미디어|엔터|배터리|에너지|정유|화학|식품|의류|패션|교육|의료|방산|로봇|소프트웨어|클라우드|플랫폼)/;
+      const looksNiche = cleanIndustry.length <= 8 || !broadPattern.test(cleanIndustry);
+      return {
+        originalIndustry,
+        analysisIndustry: cleanIndustry,
+        parentIndustry: looksNiche ? `${cleanIndustry}의 상위 산업, 인접 소비재/서비스 시장, 관련 밸류체인` : cleanIndustry,
+        segments: looksNiche
+          ? [`${cleanIndustry} 직접 시장`, `${cleanIndustry}가 속한 상위 카테고리`, `${cleanIndustry} 대체재/인접재`, `${cleanIndustry} 유통·플랫폼`, `${cleanIndustry} 공급망`]
+          : [`${cleanIndustry} 최종 수요`, `${cleanIndustry} 공급망`, `${cleanIndustry} 생산/운영`, `${cleanIndustry} 채널/서비스`],
+        keywords: [cleanIndustry, `${cleanIndustry} 산업`, `${cleanIndustry} 시장`, `${cleanIndustry} market`, `${cleanIndustry} industry`, `${cleanIndustry} adjacent market`],
+        marketUnit: "시장 규모 추정치, 산업별 적정 단위",
+        marketSeries: null,
+        rationale: looksNiche
+          ? "입력 산업명이 세부 품목 또는 좁은 세그먼트일 가능성이 있어 상위 산업과 인접 시장을 함께 추론해 분석합니다."
+          : "입력 산업명을 그대로 분석 기준으로 사용합니다.",
+        isReframed: looksNiche
+      };
+    }
+
+    function getCompanyData() {
+      const company = els.companyName.value.trim();
+      if (!company) return null;
+      const financial = getFinancial(company);
+      const sourceCompany = financial.raw && financial.raw.company ? financial.raw.company.name : (financial.sampleKey || company);
+      const analysis = financial.companyAnalysis || buildProfileCompanyAnalysis(sourceCompany, financial);
+      return {
+        company: sourceCompany,
+        inputCompany: company,
+        analysis,
+        overview: analysis.companyOverview,
+        overviewInsight: `핵심 해석: ${analysis.soWhatLead}`,
+        chain: analysis.businessStructure.map(item => [
+          item.segment,
+          `${item.whatItDoes} ${item.revenueLogic} ${item.marginLogic}`
+        ]),
+        chainInsight: analysis.businessStructure.map(item => item.soWhat).join(" "),
+        revenueCost: analysis.revenueCost.map(row => [row.item, row.mechanism, row.soWhat]),
+        financial
+      };
+    }
+
+    function stripInsightPrefix(text) {
+      return String(text || "").replace(/^(So what|핵심 해석|시사점)\s*:\s*/i, "");
+    }
+
+    function buildProfileCompanyAnalysis(company, fin) {
+      const profile = companyProfiles[company] || companyProfiles[fin.sampleKey];
+      if (fin.companyAnalysis) return fin.companyAnalysis;
+      if (profile) {
+        return {
+          title: `${company} 기업분석`,
+          meta: ["기업분석", els.reportType.value || "상세 분석", "사업구조 + DART"],
+          companyProfile: {
+            identity: `${company}은 사업 구조와 재무 성과를 함께 읽어야 하는 분석 대상 기업입니다.`,
+            coreBusiness: profile.chain[0] ? profile.chain[0][1] : "핵심 사업 확인 필요",
+            mainProducts: profile.chain[1] ? profile.chain[1][1] : "주요 제품/서비스 확인 필요",
+            customersAndChannels: profile.chain[2] ? profile.chain[2][1] : "고객/채널 확인 필요",
+            statedValue: "회사가 반복적으로 강조하는 기술, 고객, 품질, 지속가능성, 혁신 방향을 요약합니다.",
+            businessModel: profile.revenueCost[0] ? profile.revenueCost[0][1] : `매출 ${fin.revenue}를 만드는 가격, 물량, 제품 믹스 구조`,
+            currentFocus: stripInsightPrefix(profile.chainInsight)
+          },
+          companyOverview: profile.overview,
+          soWhatLead: stripInsightPrefix(profile.chainInsight),
+          businessStructure: profile.chain.map(([segment, body]) => ({
+            segment,
+            whatItDoes: body,
+            revenueLogic: "매출은 해당 사업의 가격, 물량, 고객/제품 믹스에서 발생합니다.",
+            marginLogic: "마진은 제품 믹스, 고정비 흡수, 가격 전가력에 의해 달라집니다.",
+            soWhat: body
+          })),
+          revenueCost: profile.revenueCost.map(row => ({ item: row[0], mechanism: row[1], soWhat: row[2] })),
+          financialSoWhat: buildFallbackFinancialRows(fin),
+          investmentHighlights: [
+            fin.insight || profile.chainInsight,
+            ...(profile.questions || []).slice(0, 2).map(question => `관전 포인트: ${question}`)
+          ],
+          riskFactors: (profile.questions || []).map(question => `리스크 질문: ${question}`).slice(0, 3),
+          onePageBrief: [
+            profile.overview,
+            profile.chainInsight,
+            `핵심 재무: 매출 ${fin.revenue}, EBIT ${fin.ebit}, 순차입금 ${fin.netDebt}.`
+          ],
+          sourceNote: `${company} 사업구조 프로필 + DART/시장 데이터 기반 요약입니다.`
+        };
+      }
+
+      return {
+        title: `${company} 기업분석`,
+        meta: ["기업분석", els.reportType.value || "상세 분석", "DART 기반"],
+        companyProfile: {
+          identity: `${company}은 기업 기본정보, 사업 구조, 재무 성과를 순서대로 읽어야 하는 분석 대상 기업입니다.`,
+          coreBusiness: "주요 사업은 사업보고서의 사업부문 설명을 기준으로 보강됩니다.",
+          mainProducts: "주요 제품/서비스는 공시 원문과 회사 IR 기준으로 정리됩니다.",
+          customersAndChannels: "고객/채널은 B2B/B2C, 국내/해외, 직접 판매/유통 구조로 구분합니다.",
+          statedValue: "표방 가치는 회사가 공식 자료에서 반복적으로 강조하는 전략 방향으로 정리합니다.",
+          businessModel: `매출 ${fin.revenue}를 만드는 판매량·가격·제품 믹스와 EBIT ${fin.ebit}를 만드는 비용 구조의 조합입니다.`,
+          currentFocus: `최근에는 영업현금흐름 ${fin.cfo}와 순차입금 ${fin.netDebt}가 사업 체력을 설명합니다.`
+        },
+        companyOverview: `${company}의 최신 DART 재무는 매출 ${fin.revenue}, EBIT ${fin.ebit}, 영업현금흐름 ${fin.cfo}입니다. 사업부 상세가 연결되기 전에는 재무에서 확인되는 수익성·현금흐름 중심으로 해석합니다.`,
+        soWhatLead: `핵심은 매출보다 EBIT와 현금흐름입니다. ${company}의 EBIT ${fin.ebit}, 순차입금 ${fin.netDebt}, 영업현금흐름 ${fin.cfo}가 성장 투자 여력과 다운사이드 방어력을 설명합니다.`,
+        businessStructure: [
+          { segment: "주력 매출원", whatItDoes: "DART 재무상 회사의 외형을 만드는 핵심 사업", revenueLogic: `최근 매출 ${fin.revenue}`, marginLogic: `EBIT ${fin.ebit}`, soWhat: "사업부 원문이 붙기 전에도 EBIT가 매출 대비 얼마나 남는지가 경쟁력의 첫 신호입니다." },
+          { segment: "운영/고정비", whatItDoes: "제조, 서비스 운영, 인력, 설비", revenueLogic: "가동률과 판매량이 매출을 만듭니다.", marginLogic: "고정비 흡수와 원가 전가력이 이익률을 만듭니다.", soWhat: "고정비가 큰 회사일수록 매출 둔화 때 EBIT 훼손이 빠릅니다." },
+          { segment: "현금흐름", whatItDoes: "영업현금흐름과 투자현금흐름", revenueLogic: `영업현금흐름 ${fin.cfo}`, marginLogic: `순차입금 ${fin.netDebt}`, soWhat: "현금흐름이 강하면 성장 투자와 차입 상환을 동시에 버틸 수 있습니다." },
+          { segment: "시장 평가", whatItDoes: "주가와 발행주식수 기반 밸류에이션", revenueLogic: `시가총액 ${fin.marketCap}`, marginLogic: `PER ${fin.per}`, soWhat: "PER과 이익 성장 속도의 차이가 기대 반영 수준을 보여줍니다." }
+        ],
+        revenueCost: [
+          { item: "Revenue", mechanism: `매출 ${fin.revenue}`, soWhat: "외형 성장보다 EBIT 동반 개선이 중요합니다." },
+          { item: "Cost", mechanism: `EBIT ${fin.ebit}`, soWhat: "본업 수익성은 비용 구조와 가격 전가력의 결과입니다." },
+          { item: "Cash", mechanism: `영업현금흐름 ${fin.cfo}`, soWhat: "현금전환이 약하면 이익이 좋아도 투자 여력이 제한됩니다." }
+        ],
+        financialSoWhat: buildFallbackFinancialRows(fin),
+        investmentHighlights: [`EBIT ${fin.ebit}`, `영업현금흐름 ${fin.cfo}`, `순차입금 ${fin.netDebt}`],
+        riskFactors: ["사업부 원문 미연결", "D&A 주석 미확보 시 EBITDA 보완 필요", "주가 기준일 변화에 따른 밸류에이션 변동"],
+        onePageBrief: [`${company}: 매출 ${fin.revenue}, EBIT ${fin.ebit}`, `핵심 해석: 현금흐름 ${fin.cfo}와 순차입금 ${fin.netDebt}가 핵심입니다.`],
+        sourceNote: "DART/시장 데이터 기반 요약입니다. 사업부별 제품/고객 정보는 공시 원문으로 보강됩니다."
+      };
+    }
+
+    function buildFallbackFinancialRows(fin) {
+      return [
+        { metric: "매출액", value: fin.revenue, interpretation: "외형 규모", soWhat: "매출 성장만으로는 부족하고 EBIT 개선이 동반돼야 합니다." },
+        { metric: "EBIT", value: fin.ebit, interpretation: "본업 수익성", soWhat: "회사의 경쟁력은 매출보다 EBIT의 방향성에서 먼저 보입니다." },
+        { metric: "영업현금흐름", value: fin.cfo, interpretation: "현금 전환력", soWhat: "현금흐름이 강하면 투자와 차입 상환을 내부 현금으로 감당할 수 있습니다." },
+        { metric: "순차입금", value: fin.netDebt, interpretation: "재무 체력", soWhat: "순현금/낮은 순차입은 다운사이드 방어력입니다." },
+        { metric: "PER / EV·EBITDA", value: `${fin.per || "확인 필요"} / ${fin.evEbitda || "확인 필요"}`, interpretation: "시장 기대치", soWhat: "좋은 회사여도 기대가 주가에 선반영됐으면 업사이드는 제한됩니다." }
+      ];
+    }
+
+    function getFinancial(company) {
+      if (state.companyFinancials && state.selectedCompany && normalizeText(state.selectedCompany.input) === normalizeText(company)) {
+        return buildFinancialView(state.companyFinancials);
+      }
+      const sampleKey = resolveCompanySampleKey(company);
+      if (sampleKey) return { ...financials[sampleKey], sampleKey };
+      return {
+        source: "OpenDART 자동 연동 대상. 현재 샘플 데이터셋에 없는 기업입니다.",
+        revenue: "조회 필요",
+        ebit: "조회 필요",
+        ebitda: "조회 필요",
+        netDebt: "조회 필요",
+        cfo: "조회 필요",
+        stability: "조회 필요",
+        ebitdaSeries: [0, 0, 0, 0, 0],
+        cfoSeries: [0, 0, 0, 0, 0],
+        insight: "이 기업은 기업 코드 매칭 후 매출, EBIT, EBITDA, 순차입금, 영업현금흐름을 자동으로 채워야 정확한 해석을 만들 수 있습니다."
+      };
+    }
+
+    function resolveCompanySampleKey(company) {
+      const normalized = normalizeText(company);
+      if (!normalized) return "";
+      if (companyAliases[normalized]) return companyAliases[normalized];
+      return Object.keys(financials).find(key => {
+        const normalizedKey = normalizeText(key);
+        return normalizedKey === normalized || normalizedKey.includes(normalized) || normalized.includes(normalizedKey);
+      }) || "";
+    }
+
+    function buildFinancialView(raw) {
+      const latest = [...raw.periods].reverse().find(period => period.metrics && Object.keys(period.metrics).length) || { metrics: {}, year: raw.request.base_year };
+      const metrics = latest.metrics || {};
+      const marketData = raw.market_data || {};
+      const valuation = raw.valuation || {};
+      const hasEbitda = raw.periods.some(period => Number.isFinite(period.metrics && period.metrics.ebitda));
+      return {
+        raw,
+        source: `${raw.lineage.source} ${raw.lineage.endpoint}, ${raw.request.fs_div}, ${raw.quality.score} quality`,
+        revenue: formatWon(metrics.revenue),
+        ebit: formatWon(metrics.operating_income),
+        ebitda: formatWon(metrics.ebitda),
+        netDebt: formatWon(metrics.net_debt),
+        cfo: formatWon(metrics.operating_cash_flow),
+        stability: formatPercent(metrics.debt_ratio),
+        noOfShares: formatNumber(marketData.no_of_shares),
+        stockPrice: Number.isFinite(marketData.stock_price) ? `${formatNumber(marketData.stock_price)}원` : "리서치 필요",
+        marketCap: formatWon(valuation.market_cap),
+        per: formatMultiple(valuation.per),
+        evEbitda: formatMultiple(valuation.ev_ebitda),
+        priceDate: marketData.price_date || "확인 필요",
+        years: raw.periods.map(period => String(period.year || "")),
+        revenueSeries: raw.periods.map(period => toTrillion(period.metrics && period.metrics.revenue)),
+        ebitSeries: raw.periods.map(period => toTrillion(period.metrics && period.metrics.operating_income)),
+        ebitdaSeries: raw.periods.map(period => toTrillion(period.metrics && (hasEbitda ? period.metrics.ebitda : period.metrics.operating_income))),
+        earningsChartTitle: hasEbitda ? "EBITDA 변화 추이" : "EBIT 변화 추이",
+        earningsChartCaption: hasEbitda ? "최근 5개년, 조원 단위" : "D&A 주석 보완 전, 최근 5개년 조원 단위",
+        cfoSeries: raw.periods.map(period => toTrillion(period.metrics && period.metrics.operating_cash_flow)),
+        netDebtSeries: raw.periods.map(period => toTrillion(period.metrics && period.metrics.net_debt)),
+        cashSeries: raw.periods.map(period => toTrillion(period.metrics && period.metrics.cash_and_cash_equivalents)),
+        debtRatioSeries: raw.periods.map(period => percentPoint(period.metrics && period.metrics.debt_ratio)),
+        assetsSeries: raw.periods.map(period => toTrillion(period.metrics && period.metrics.total_assets)),
+        liabilitiesSeries: raw.periods.map(period => toTrillion(period.metrics && period.metrics.total_liabilities)),
+        equitySeries: raw.periods.map(period => toTrillion(period.metrics && period.metrics.total_equity)),
+        companyAnalysis: raw.company_analysis || null,
+        insight: raw.company_analysis ? raw.company_analysis.soWhatLead : (raw.insights || []).join(" "),
+        latestYear: latest.year,
+        marketWarnings: marketData.warnings || [],
+        marketSources: marketData.sources || []
+      };
+    }
+
+    function renderReport() {
+      if (state.mode === "industry") {
+        renderIndustryReport();
+      } else {
+        renderCompanyReport();
+      }
+      updateBriefToggleLabel();
+    }
+
+    function setDefaultGraphGrid() {
+      els.graphGrid.classList.remove("single");
+      els.graphGrid.innerHTML = `
+        <div class="graph-card">
+          <h4 id="graphOneTitle">시장 규모 성장 추이</h4>
+          <p id="graphOneCaption">시장 규모</p>
+          <div class="trend-graph" id="ebitdaChart"></div>
+        </div>
+        <div class="graph-card">
+          <h4 id="graphTwoTitle">수요 동인 변화</h4>
+          <p id="graphTwoCaption">수요 변화</p>
+          <div class="trend-graph" id="cashFlowChart"></div>
+        </div>
+      `;
+      refreshGraphRefs();
+    }
+
+    function setIndustryGraphGrid() {
+      els.graphGrid.classList.add("single");
+      els.graphGrid.innerHTML = `
+        <div class="graph-card">
+          <h4 id="graphOneTitle">시장 규모 성장 추이</h4>
+          <p id="graphOneCaption">시장 규모</p>
+          <div class="trend-graph" id="ebitdaChart"></div>
+          <div class="graph-insight" id="marketGraphInsight"></div>
+        </div>
+      `;
+      refreshGraphRefs();
+      els.graphTwoTitle = null;
+      els.graphTwoCaption = null;
+      els.cashFlowChart = null;
+    }
+
+    function refreshGraphRefs() {
+      els.graphOneTitle = document.getElementById("graphOneTitle");
+      els.graphOneCaption = document.getElementById("graphOneCaption");
+      els.graphTwoTitle = document.getElementById("graphTwoTitle");
+      els.graphTwoCaption = document.getElementById("graphTwoCaption");
+      els.ebitdaChart = document.getElementById("ebitdaChart");
+      els.cashFlowChart = document.getElementById("cashFlowChart");
+    }
+
+    function setCompanyGraphGrid(graphs) {
+      els.graphGrid.classList.remove("single");
+      els.graphGrid.innerHTML = graphs.map((graph, index) => `
+        <div class="graph-card">
+          <h4>${escapeHtml(graph.title)}</h4>
+          <p>${escapeHtml(graph.caption)}</p>
+          <div class="trend-graph" id="companyGraph${index}"></div>
+          <div class="graph-insight">
+            <div><b>관찰</b>${escapeHtml(graph.insight.observation)}</div>
+            <div><b>해석</b>${escapeHtml(graph.insight.interpretation)}</div>
+            <div><b>시사점</b>${escapeHtml(graph.insight.soWhat)}</div>
+          </div>
+        </div>
+      `).join("");
+      graphs.forEach((graph, index) => {
+        renderTrendGraph(document.getElementById(`companyGraph${index}`), graph.values, graph.title, {
+          suffix: graph.suffix || "",
+          years: graph.years
+        });
+      });
+      refreshGraphRefs();
+    }
+
+    function getIndustryRequestKey() {
+      return [
+        els.industryName.value.trim(),
+        els.scope.value,
+        els.period.value,
+        els.reportType.value
+      ].join("|");
+    }
+
+    function buildLocalIndustryAnalysis(data) {
+      const reportType = els.reportType.value || "Preview";
+      const scope = els.scope.value || "분석 범위";
+      const period = els.period.value || "분석 기간";
+      const years = ["2021", "2022", "2023", "2024", "2025"];
+      const context = data.context || resolveIndustryInputContext(data.name);
+      return {
+        title: `${data.name} 산업분석`,
+        meta: context.isReframed
+          ? ["산업분석", scope, period, reportType, `범위 재정의: ${context.originalIndustry}`]
+          : ["산업분석", scope, period, reportType, "Local preview"],
+        industry_overview: {
+          executive_summary: `${data.name} 산업은 최종 수요 성장과 비용 부담이 동시에 작동하는 시장입니다. ${context.rationale} 이 화면은 AI 생성 전 로컬 미리보기이므로 산업별 세부 수치는 제한적이지만, 보고서 구조는 실제 생성 결과와 동일하게 유지됩니다.`,
+          definition: data.overview,
+          market_scope: `${scope} 범위에서는 ${context.parentIndustry}까지 자료 탐색 범위를 확장해 봅니다. 특히 세부 품목의 직접 통계가 부족한 경우 상위 산업 규모, 인접 세그먼트 성장률, 채널 데이터, 영문 키워드(${context.keywords.slice(0, 4).join(", ")})를 함께 읽습니다.`,
+          current_state: `${period} 기준으로는 시장 확대와 비용 압력이 동시에 나타나는 혼재 국면입니다. 매출 확대가 곧바로 산업 이익 개선으로 이어지려면 가격 전가와 가동률 개선이 함께 필요합니다.`,
+          demand_side: `수요는 ${context.segments.slice(0, 3).join(", ")}의 구매 빈도, 가격대, 소비자 관심도, 기업 고객의 예산 집행에 의해 형성됩니다.`,
+          supply_side: "공급은 핵심 부품, 설비, 인력, 물류, 인증 체계의 제약을 받습니다. 공급 병목이 있는 구간은 단기적으로 협상력이 높아질 수 있습니다.",
+          structural_change: "최근 산업 분석의 초점은 단순 시장 성장률보다 고부가 제품 믹스, 장기계약, 플랫폼화, 반복 매출 구조로 이동하고 있습니다."
+        },
+        market_trend: {
+          unit: context.marketUnit,
+          series: years.map((year, index) => ({
+            year,
+            value: (data.marketSeries || [10, 11, 12.2, 13.6, 15.1])[index],
+            is_estimated: true,
+            note: context.isReframed ? "세부 품목 직접 통계가 제한적이어서 상위 산업과 인접 시장 기준으로 추정" : "로컬 미리보기 시장 규모 추정",
+            source_reference: "local preview"
+          })),
+          growth_comment: "정식 AI 생성에서는 산업별 적정 단위와 성장률 설명이 채워집니다.",
+          data_quality_note: "로컬 미리보기 값은 외부 원문 검증 전 수치입니다.",
+          interpretation: `${scope} ${period} 관점에서 ${data.name} 산업은 시장 확대와 비용 부담이 동시에 나타나는 구조입니다. 시장 규모가 커져도 공급 과잉이나 가격 경쟁이 심하면 이익률 개선은 제한될 수 있습니다.`
+        },
+        value_chain: data.chain.map(([stage, detail]) => ({
+          stage,
+          participants: detail,
+          role: detail,
+          revenue_model: "제품 판매, 서비스 이용료, 장기계약, 유지보수, 유통 마진 중 해당 산업에 맞는 방식으로 매출이 발생합니다.",
+          cost_structure: "원재료, 인건비, 설비투자, 물류비, 품질보증비가 주요 비용으로 작동합니다.",
+          margin_power: "고객 전환 비용이 높거나 공급 대체가 어려운 구간일수록 가격 협상력이 높습니다.",
+          report_implication: "이 단계가 산업 내 profit pool을 흡수하는지 여부가 밸류체인 분석의 핵심입니다."
+        })),
+        revenue_cost_structure: {
+          revenue_sources: data.revenueCost.slice(0, 3).map(row => ({
+            source: row[0],
+            mechanism: row[1],
+            sensitivity: row[2]
+          })),
+          cost_drivers: [
+            { cost: "Input cost", mechanism: "원재료, 핵심 부품, 에너지, 물류비가 원가를 압박합니다.", risk: "가격 전가력이 약하면 매출 증가에도 마진이 훼손됩니다." },
+            { cost: "Fixed cost / CAPEX", mechanism: "설비 투자, 감가상각, 인건비, R&D가 고정비 부담을 만듭니다.", risk: "수요 둔화 시 가동률 하락이 이익률을 빠르게 낮춥니다." },
+            { cost: "Compliance / Quality", mechanism: "규제 대응, 인증, 품질보증, 안전 비용이 필요합니다.", risk: "인증 지연과 품질 이슈는 출하와 수익성을 동시에 훼손합니다." }
+          ],
+          profit_pool_insight: `${data.name} 산업의 profit pool은 최종 수요가 가장 큰 곳이 아니라 공급 병목, 고객 락인, 가격 전가력을 가진 구간에 남습니다.`
+        },
+        key_variables: [
+          { variable: "최종 수요 성장", current_signal: "시장 외형을 키우지만 이익률 개선을 단독으로 보장하지는 않습니다.", impact_on_industry: "수요가 강하면 가동률과 투자 명분이 좋아지지만 공급 확대가 더 빠르면 가격은 흔들릴 수 있습니다.", affected_value_chain: "End Demand, Production", evidence_to_watch: "시장 규모, 침투율, 고객사 CAPEX, 재고 수준" },
+          { variable: "공급 병목", current_signal: "단기 병목은 가격 협상력을 만들지만 중기 증설은 공급 과잉 리스크가 됩니다.", impact_on_industry: "병목 구간은 이익을 흡수하고 과잉 증설 구간은 가격 하락을 유발합니다.", affected_value_chain: "Upstream, Production", evidence_to_watch: "증설 계획, 리드타임, 가동률, 수주잔고" },
+          { variable: "가격 전가력", current_signal: "원가 변동이 큰 산업일수록 가격 전가 여부가 매출 성장보다 중요합니다.", impact_on_industry: "가격 전가가 가능한 기업은 비용 상승기에도 마진을 방어합니다.", affected_value_chain: "Production, Channel", evidence_to_watch: "ASP, 계약 구조, 가격 인상 성공 여부" },
+          { variable: "정책/규제", current_signal: "정책은 수요를 앞당기거나 비용과 진입장벽을 높일 수 있습니다.", impact_on_industry: "보조금과 규제는 특정 제품군의 성장 속도와 투자 우선순위를 바꿉니다.", affected_value_chain: "전 밸류체인", evidence_to_watch: "보조금, 관세, 인허가, 환경·안전 규제" }
+        ],
+        report_implications: {
+          core_conclusion: `${data.name} 산업은 시장 규모 확대보다 수요 성장의 이익이 어느 가치사슬 구간에 남는지를 중심으로 해석해야 합니다.`,
+          implications: [
+            `${data.name} 산업의 핵심은 시장 성장률이 아니라 성장의 이익이 어느 밸류체인 구간에 남는가입니다.`,
+            "수혜 기업과 피해 기업은 가격 전가력, 고정비 부담, 고객 락인에서 갈립니다.",
+            "최근 이벤트가 실적으로 연결되는 경로를 설명하면 산업 이해도가 훨씬 선명하게 드러납니다."
+          ],
+          discussion_points: [
+            `${data.name} 산업에서 가장 가격 결정력이 강한 구간은 어디인가?`,
+            "최근 뉴스 하나가 매출/비용/마진 중 어디에 영향을 주는가?"
+          ]
+        },
+        sources: [
+          { title: "Local preview industry frame", publisher: "BIT Analysis", url: "", used_for: "산업 구조 미리보기" },
+          { title: context.keywords.slice(0, 5).join(" / "), publisher: "검색 키워드", url: "", used_for: "상위 산업과 인접 세그먼트 탐색 기준" }
+        ]
+      };
+    }
+
+    async function generateReport() {
+      if (state.mode !== "industry") {
+        renderReport();
+        return;
+      }
+
+      if (!els.industryName.value.trim() || !els.scope.value || !els.period.value || !els.reportType.value) {
+        renderIndustryReport();
+        showToast("산업명, 분석 범위, 기간, 리포트 유형을 먼저 선택하세요.");
+        return;
+      }
+
+      els.loading.classList.add("active");
+      els.dartStatus.textContent = "AI 산업분석을 생성하는 중입니다. 증권사 리포트식 구조로 정리하고 있어요.";
+      document.getElementById("generateBtn").disabled = true;
+      try {
+        const response = await fetch(apiUrl("/api/analysis/industry"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            industry: els.industryName.value.trim(),
+            scope: els.scope.value,
+            period: els.period.value,
+            report_type: els.reportType.value
+          })
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) throw new Error(payload.error || `HTTP ${response.status}`);
+        state.industryAnalysis = payload.analysis;
+        state.industryRequestKey = getIndustryRequestKey();
+        renderIndustryReport();
+        els.dartStatus.textContent = payload.generated_by === "openai"
+          ? "분석 생성 완료"
+          : "기본 분석 생성 완료";
+      } catch (error) {
+        showToast(`AI 생성 실패: ${error.message}`);
+        els.dartStatus.textContent = "AI 생성에 실패해 로컬 미리보기를 유지합니다.";
+      } finally {
+        document.getElementById("generateBtn").disabled = false;
+        els.loading.classList.remove("active");
+      }
+    }
+
+    function renderIndustryReport() {
+      const data = getIndustryData();
+      if (!data || !els.scope.value || !els.period.value || !els.reportType.value) {
+        renderEmptyReport("산업명, 분석 범위, 분석 기간, 리포트 유형을 선택하면 산업분석 결과가 생성됩니다. 산업분석에는 기업 매출액, EBIT, EBITDA가 들어가지 않습니다.");
+        return;
+      }
+
+      const analysis = state.industryRequestKey === getIndustryRequestKey() && state.industryAnalysis
+        ? state.industryAnalysis
+        : buildLocalIndustryAnalysis(data);
+      const title = analysis.title || `${data.name} 산업분석`;
+
+      setIndustryGraphGrid();
+      els.sectionOneTitle.textContent = "1. 산업 개요";
+      els.sectionTwoTitle.textContent = "2. 밸류체인";
+      els.sectionThreeTitle.textContent = "3. Revenue / Cost 구조와 핵심 변수";
+      els.sectionFourTitle.textContent = "4. 시장 규모 및 산업적 시사점";
+      els.graphOneTitle.textContent = "시장 규모 성장 추이";
+      els.graphOneCaption.textContent = analysis.market_trend.unit;
+      els.financialTable.classList.add("hidden");
+      els.financialWrap.classList.add("hidden");
+      els.valuationGrid.classList.add("hidden");
+      els.companyDetailGrid.classList.add("hidden");
+      els.marketResearchPanel.classList.add("hidden");
+
+      els.reportMeta.innerHTML = (analysis.meta || ["산업분석", els.scope.value, els.period.value, els.reportType.value])
+        .map(item => `<span class="badge">${escapeHtml(item)}</span>`).join("");
+      els.reportTitle.textContent = title;
+      els.overviewText.innerHTML = reportParagraphs([
+        analysis.industry_overview.executive_summary,
+        analysis.industry_overview.definition,
+        analysis.industry_overview.current_state
+      ]);
+      els.overviewInsight.innerHTML = reportNotes([
+        ["분석 범위", analysis.industry_overview.market_scope],
+        ["수요 측면", analysis.industry_overview.demand_side],
+        ["공급 측면", analysis.industry_overview.supply_side],
+        ["구조 변화", analysis.industry_overview.structural_change]
+      ]);
+      els.chainGrid.classList.add("report-chain");
+      els.chainGrid.innerHTML = analysis.value_chain.map(item => `
+        <div class="chain-card">
+          <strong>${escapeHtml(item.stage)}</strong>
+          <small>
+            <span><b>참여자</b>${escapeHtml(item.participants)}</span>
+            <span><b>역할</b>${escapeHtml(item.role)}</span>
+            <span><b>매출 구조</b>${escapeHtml(item.revenue_model)}</span>
+            <span><b>비용 구조</b>${escapeHtml(item.cost_structure)}</span>
+            <span><b>마진 결정력</b>${escapeHtml(item.margin_power)}</span>
+            <span><b>보고서 해석</b>${escapeHtml(item.report_implication)}</span>
+          </small>
+        </div>
+      `).join("");
+      els.chainInsight.textContent = analysis.revenue_cost_structure.profit_pool_insight;
+      const revenueRows = analysis.revenue_cost_structure.revenue_sources.map(row => [`Revenue: ${row.source}`, row.mechanism, row.sensitivity]);
+      const costRows = analysis.revenue_cost_structure.cost_drivers.map(row => [`Cost: ${row.cost}`, row.mechanism, row.risk]);
+      const variableRows = analysis.key_variables.map(row => [`Variable: ${row.variable}`, `${row.current_signal} ${row.impact_on_industry}`, `영향 구간: ${row.affected_value_chain} / 근거: ${row.evidence_to_watch}`]);
+      els.revenueCostBody.innerHTML = [...revenueRows, ...costRows, ...variableRows].map(row => `
+        <tr><td><strong>${escapeHtml(row[0])}</strong></td><td>${escapeHtml(row[1])}</td><td>${escapeHtml(row[2])}</td></tr>
+      `).join("");
+      renderTrendGraph(els.ebitdaChart, seriesValues(analysis.market_trend.series), "시장 규모/성장", {
+        suffix: "",
+        years: analysis.market_trend.series.map(item => item.year)
+      });
+      const graphInsight = document.getElementById("marketGraphInsight");
+      if (graphInsight) {
+        graphInsight.innerHTML = [
+          `<div><b>성장 코멘트</b>${escapeHtml(analysis.market_trend.growth_comment)}</div>`,
+          `<div><b>해석</b>${escapeHtml(analysis.market_trend.interpretation)}</div>`,
+          `<div><b>데이터 주의</b>${escapeHtml(analysis.market_trend.data_quality_note)}</div>`
+        ].join("");
+      }
+      const implications = analysis.report_implications.implications.map(point => `• ${escapeHtml(point)}`).join("<br>");
+      const discussions = analysis.report_implications.discussion_points.map(question => `• ${escapeHtml(question)}`).join("<br>");
+      els.financialInsight.innerHTML = `<strong>${escapeHtml(analysis.report_implications.core_conclusion)}</strong><br>${implications}<br><br><b>Discussion Points</b><br>${discussions}`;
+      els.sourceLine.textContent = `출처: ${sourceSummary(analysis.sources)}`;
+      if (isDeepIndustryReport(els.reportType.value)) {
+        renderIndustryDeepDive(analysis, data.name);
+      } else {
+        els.companyDetailGrid.classList.add("hidden");
+        els.companyDetailGrid.innerHTML = "";
+        els.marketResearchPanel.classList.add("hidden");
+        els.marketResearchPanel.innerHTML = "";
+      }
+      document.getElementById("downloadBtn").textContent = "PDF 내려받기";
+      if (state.industryRequestKey !== getIndustryRequestKey()) {
+        els.dartStatus.textContent = "현재 화면은 로컬 미리보기입니다. 분석 생성을 누르면 AI가 산업 개요, 시장 규모, 밸류체인, Revenue/Cost, 핵심 변수, 산업적 시사점을 새로 작성합니다.";
+      }
+      state.markdown = buildIndustryMarkdown(title, analysis);
+    }
+
+    function renderIndustryDeepDive(analysis, industryName) {
+      const deep = analysis.deep_dive || buildLocalIndustryDeepDive(industryName);
+      els.marketResearchPanel.classList.remove("hidden");
+      els.marketResearchPanel.innerHTML = `<strong>증권사 리포트형 Deep Dive</strong>${escapeHtml(deep.headline_thesis)}`;
+      els.companyDetailGrid.classList.remove("hidden");
+      els.companyDetailGrid.innerHTML = [
+        ["주요 이슈 플로우", deep.issue_flow.map(item => `${item.issue}: ${item.evidence} → ${item.industry_impact}`)],
+        ["세부 섹터 판단", deep.subsector_breakdown.map(item => `${item.subsector}: ${item.current_condition} / 매출: ${item.revenue_logic} / 병목: ${item.cost_or_bottleneck} / 전망: ${item.outlook}`)],
+        ["체크 지표", deep.indicator_watch.map(item => `${item.indicator}: ${item.current_read} → ${item.why_it_moves_the_sector}`)],
+        ["시나리오", deep.scenario_analysis.map(item => `${item.case_name}: ${item.conditions} → ${item.industry_result}`)],
+        ["리스크", deep.risk_factors.map(item => `${item.risk}: ${item.transmission_path} / Early signal: ${item.early_signal}`)]
+      ].map(([title, lines]) => `
+        <div class="detail-panel"><h4>${escapeHtml(title)}</h4><ul>${lines.map(line => `<li>${escapeHtml(line)}</li>`).join("")}</ul></div>
+      `).join("");
+    }
+
+    function buildLocalIndustryDeepDive(industryName) {
+      return {
+        headline_thesis: `${industryName} 산업의 심층 분석은 수요 성장, 공급 제약, 가격 전가력, 정책 변화가 어느 방향으로 결합되는지에 따라 달라집니다.`,
+        issue_flow: [
+          { issue: "수요 사이클 변화", evidence: "최종 수요와 고객사 투자 집행이 산업 외형을 결정합니다.", industry_impact: "수요 확대가 가격 인상으로 이어지면 산업 이익률이 개선되지만, 공급 증가가 더 빠르면 매출 성장에도 마진은 제한됩니다." },
+          { issue: "공급망 병목", evidence: "핵심 부품, 인력, 설비, 인증에서 병목이 발생할 수 있습니다.", industry_impact: "병목 구간은 단기적으로 협상력을 갖고 산업 내 profit pool을 흡수합니다." },
+          { issue: "정책/규제 변화", evidence: "보조금, 관세, 인허가, 환경 규제가 투자 방향을 바꿉니다.", industry_impact: "정책은 신규 수요를 만들 수 있지만, 동시에 비용 부담과 경쟁 구도를 재편합니다." }
+        ],
+        subsector_breakdown: [
+          { subsector: "상위 공급망", current_condition: "핵심 투입 요소의 가격과 공급 안정성이 산업 전체 비용 구조를 좌우합니다.", revenue_logic: "장기계약과 고부가 부품 판매에서 매출이 발생합니다.", cost_or_bottleneck: "원재료 가격, 설비투자, 인증 장벽이 주요 병목입니다.", outlook: "대체 공급이 어려운 품목은 수요 둔화기에도 상대적으로 마진을 방어할 수 있습니다." },
+          { subsector: "제조/운영", current_condition: "가동률과 생산성이 이익률을 좌우하는 구간입니다.", revenue_logic: "판매량, ASP, 제품 믹스가 매출을 결정합니다.", cost_or_bottleneck: "고정비, 인건비, 에너지 비용이 손익 변동성을 만듭니다.", outlook: "수요 회복기에는 영업 레버리지가 크지만 둔화기에는 손익 훼손이 빠릅니다." },
+          { subsector: "채널/서비스", current_condition: "고객 접점과 반복 매출을 가진 사업자가 실적 가시성을 확보합니다.", revenue_logic: "유통 마진, 플랫폼 수수료, 유지보수, 구독형 매출이 발생합니다.", cost_or_bottleneck: "고객 획득 비용과 물류비가 주요 부담입니다.", outlook: "고객 락인이 강하면 제조 단계보다 안정적인 이익을 만들 수 있습니다." }
+        ],
+        indicator_watch: [
+          { indicator: "시장 규모/출하량", current_read: "산업 외형 성장 여부를 보여주는 1차 지표입니다.", why_it_moves_the_sector: "수요가 강하면 가동률과 투자 집행이 개선됩니다." },
+          { indicator: "ASP/가격", current_read: "가격 전가력과 경쟁 강도를 보여줍니다.", why_it_moves_the_sector: "ASP가 유지되면 원가 상승기에도 마진 방어가 가능합니다." },
+          { indicator: "가동률/수주잔고", current_read: "공급망의 실제 체감 수요를 보여줍니다.", why_it_moves_the_sector: "가동률 상승은 고정비 흡수와 이익률 개선으로 이어집니다." },
+          { indicator: "정책/보조금/관세", current_read: "수요와 비용을 동시에 움직이는 외생 변수입니다.", why_it_moves_the_sector: "정책 변화는 특정 하위 시장의 성장 속도와 경쟁 구도를 바꿉니다." }
+        ],
+        scenario_analysis: [
+          { case_name: "Bull Case", conditions: "수요 성장, 가격 전가, 공급 병목이 동시에 유지되는 경우", industry_result: "산업 외형과 마진이 함께 개선되고 병목 구간의 기업 가치가 재평가됩니다." },
+          { case_name: "Base Case", conditions: "수요는 성장하지만 비용 부담과 경쟁이 일부 상쇄되는 경우", industry_result: "산업은 성장하지만 하위 섹터별 이익 차별화가 커집니다." },
+          { case_name: "Bear Case", conditions: "수요 둔화와 공급 과잉, 정책 축소가 겹치는 경우", industry_result: "가격 하락과 가동률 둔화가 동시에 나타나 산업 마진이 훼손됩니다." }
+        ],
+        risk_factors: [
+          { risk: "공급 과잉", transmission_path: "증설이 수요보다 빠르면 가격 하락과 재고 증가가 발생합니다.", early_signal: "가동률 하락, 재고 증가, ASP 하락" },
+          { risk: "원가 상승", transmission_path: "원재료·인건비·물류비 상승이 비용 구조를 압박합니다.", early_signal: "원재료 가격 상승, 운임 상승, 가격 인상 실패" },
+          { risk: "정책 변화", transmission_path: "보조금 축소나 규제 강화가 수요와 비용을 동시에 악화시킵니다.", early_signal: "정책 예산 축소, 인허가 지연, 관세 변경" }
+        ]
+      };
+    }
+
+    function buildCompanySummarySheet(data, fin) {
+      const analysis = data.analysis;
+      const profile = getCompanyProfile(analysis, data.company, fin);
+      const earningsSnapshot = hasUsableMetric(fin.ebitda)
+        ? `EBITDA ${fin.ebitda}`
+        : `EBIT ${fin.ebit}, EBITDA는 D&A 주석 보강 필요`;
+      const corporateRows = [
+        { label: "○ 기업 기본정보", className: "section-label" },
+        { label: `# 정체성: ${profile.identity}` },
+        { label: `# 핵심 사업: ${profile.coreBusiness}` },
+        { label: `# 주요 제품/서비스: ${profile.mainProducts}` },
+        { label: `# 고객/채널: ${profile.customersAndChannels}` },
+        { label: `# 표방 가치/전략: ${profile.statedValue}` },
+        { label: `# 돈 버는 방식: ${profile.businessModel}` },
+        { label: `# 최근 초점: ${profile.currentFocus}` },
+        { label: `# 재무 스냅샷: 매출 ${fin.revenue}, ${earningsSnapshot}` }
+      ];
+      const highlightBullets = [
+        { label: "○ 사업적 강점", className: "section-label" },
+        ...analysis.investmentHighlights.map(text => ({ label: `# ${text}` })),
+        { label: "○ 리스크 요인", className: "section-label" },
+        ...analysis.riskFactors.map(text => ({ label: `# ${text}` }))
+      ];
+      return `
+        <div class="company-summary-sheet">
+          <div class="sheet-panel">
+            <h4>기업 기본정보 / 사업 분석</h4>
+            <ul class="sheet-list">${corporateRows.map(item => `<li class="${item.className || ""}">${escapeHtml(item.label)}</li>`).join("")}</ul>
+          </div>
+          <div class="sheet-panel">
+            <h4>사업적 강점 / 리스크 요인</h4>
+            <ul class="sheet-list">${highlightBullets.map(item => `<li class="${item.className || ""}">${escapeHtml(item.label)}</li>`).join("")}</ul>
+          </div>
+        </div>
+      `;
+    }
+
+    function getCompanyProfile(analysis, company, fin) {
+      const fallback = {
+        identity: `${company}은 사업 구조와 재무 성과를 함께 읽어야 하는 분석 대상 기업입니다.`,
+        coreBusiness: analysis.businessStructure && analysis.businessStructure[0] ? analysis.businessStructure[0].whatItDoes : "핵심 사업 확인 필요",
+        mainProducts: analysis.businessStructure && analysis.businessStructure[1] ? analysis.businessStructure[1].whatItDoes : "주요 제품/서비스 확인 필요",
+        customersAndChannels: analysis.businessStructure && analysis.businessStructure[2] ? analysis.businessStructure[2].whatItDoes : "고객/채널 확인 필요",
+        statedValue: "공식 자료에서 반복적으로 강조하는 기술, 고객, 품질, 지속가능성, 혁신 방향",
+        businessModel: `매출 ${fin.revenue}를 만드는 판매량·가격·제품 믹스와 EBIT ${fin.ebit}를 만드는 비용 구조`,
+        currentFocus: analysis.soWhatLead || "사업 구조가 실제 손익과 현금흐름으로 이어지는지"
+      };
+      return { ...fallback, ...(analysis.companyProfile || {}) };
+    }
+
+    function renderCompanyFinancialTable(data, fin) {
+      if (!fin.raw || !Array.isArray(fin.raw.periods)) {
+        els.financialTable.querySelector("thead").innerHTML = "<tr><th>지표</th><th>최근 값</th><th>해석</th></tr>";
+        els.financialBody.innerHTML = data.analysis.financialSoWhat
+          .map(row => `<tr><td><strong>${escapeHtml(row.metric)}</strong></td><td>${escapeHtml(row.value)}</td><td>${escapeHtml(`${row.interpretation} → ${row.soWhat}`)}</td></tr>`)
+          .join("");
+        return;
+      }
+
+      const periods = fin.raw.periods.filter(period => period.metrics && Object.keys(period.metrics).length);
+      const years = periods.map(period => String(period.year));
+      const rows = [
+        ["매출액", "revenue", "외형 규모와 성장 지속성"],
+        ["EBIT", "operating_income", "본업 수익성"],
+        ["EBITDA", "ebitda", "감가상각 전 현금성 영업이익"],
+        ["당기순이익", "net_income", "주주 귀속 이익"],
+        ["자산총계", "total_assets", "운용 자산 규모"],
+        ["부채총계", "total_liabilities", "재무 레버리지"],
+        ["자본총계", "total_equity", "자본 완충력"],
+        ["현금및현금성자산", "cash_and_cash_equivalents", "단기 유동성"],
+        ["순차입금", "net_debt", "재무 체력"],
+        ["영업현금흐름", "operating_cash_flow", "이익의 현금 전환"],
+        ["투자현금흐름", "investing_cash_flow", "CAPEX/투자 단계"],
+        ["재무현금흐름", "financing_cash_flow", "차입/상환/주주환원"]
+      ];
+      els.financialTable.querySelector("thead").innerHTML = `<tr><th>지표</th>${years.map(year => `<th>${escapeHtml(year)}</th>`).join("")}<th>해석</th></tr>`;
+      els.financialBody.innerHTML = rows.map(([label, key, note]) => `
+        <tr>
+          <td><strong>${escapeHtml(label)}</strong></td>
+          ${periods.map(period => `<td>${escapeHtml(formatFinancialCell(period.metrics, key))}</td>`).join("")}
+          <td>${escapeHtml(note)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function hasUsableMetric(value) {
+      const text = String(value || "");
+      return Boolean(text && !text.includes("확인 필요") && !text.includes("보완 필요"));
+    }
+
+    function formatFinancialCell(metrics, key) {
+      if (key === "ebitda" && !Number.isFinite(metrics[key])) return "D&A 주석 보강";
+      return formatWon(metrics[key]);
+    }
+
+    function buildCompanyGraphs(data, fin) {
+      const years = fin.years && fin.years.length ? fin.years : ["2021", "2022", "2023", "2024", "2025"];
+      const graphInsights = data.analysis.graphInsights || [];
+      const findInsight = title => {
+        const matched = graphInsights.find(item => normalizeText(item.title || "").includes(normalizeText(title)) || normalizeText(title).includes(normalizeText(item.title || "")));
+        return matched || buildLocalGraphInsight(title, fin);
+      };
+      return [
+        {
+          title: "매출액 변화 추이",
+          caption: "최근 5개년, 조원 단위",
+          values: fin.revenueSeries || [],
+          years,
+          suffix: "조",
+          insight: findInsight("매출액")
+        },
+        {
+          title: fin.earningsChartTitle || "EBITDA 변화 추이",
+          caption: fin.earningsChartCaption || "최근 5개년, 조원 단위",
+          values: fin.ebitdaSeries || fin.ebitSeries || [],
+          years,
+          suffix: "조",
+          insight: findInsight("EBITDA")
+        },
+        {
+          title: "영업현금흐름 변화 추이",
+          caption: "최근 5개년, 조원 단위",
+          values: fin.cfoSeries || [],
+          years,
+          suffix: "조",
+          insight: findInsight("영업현금흐름")
+        },
+        {
+          title: "순차입금 변화 추이",
+          caption: "최근 5개년, 조원 단위",
+          values: fin.netDebtSeries || [],
+          years,
+          suffix: "조",
+          insight: findInsight("순차입금")
+        }
+      ];
+    }
+
+    function buildLocalGraphInsight(title, fin) {
+      const metric = title.replace(" 변화 추이", "");
+      if (title.includes("매출")) {
+        return {
+          observation: `최근 매출은 ${fin.revenue}입니다.`,
+          interpretation: "외형 성장만으로는 충분하지 않고 EBIT/EBITDA가 함께 개선되는 흐름이 중요합니다.",
+          soWhat: "매출 증가가 마진 개선으로 연결될 때 질 좋은 성장으로 해석할 수 있습니다."
+        };
+      }
+      if (title.includes("EBIT")) {
+        return {
+          observation: `최근 EBIT ${fin.ebit}, EBITDA ${fin.ebitda}입니다.`,
+          interpretation: "EBITDA는 감가상각 부담을 제거한 현금성 영업 체력을 보여줍니다.",
+          soWhat: "EBITDA가 회복되면 CAPEX 부담이 큰 기업도 다음 투자 사이클을 버틸 여력이 커집니다."
+        };
+      }
+      if (title.includes("현금")) {
+        return {
+          observation: `최근 영업현금흐름은 ${fin.cfo}입니다.`,
+          interpretation: "회계상 이익이 실제 현금으로 전환되는지가 이익의 질을 가릅니다.",
+          soWhat: "CFO가 안정적이면 투자, 차입 상환, 주주환원을 내부 현금으로 감당할 가능성이 높습니다."
+        };
+      }
+      return {
+        observation: `${metric}의 최근 값은 ${title.includes("순차입") ? fin.netDebt : "DART 조회값"}입니다.`,
+        interpretation: "순차입금은 현금 여력과 차입 부담을 동시에 보여주는 안정성 지표입니다.",
+        soWhat: "순현금 또는 낮은 순차입 구조는 업황 둔화와 투자 확대를 버티는 방어력입니다."
+      };
+    }
+
+    function renderCompanyReport() {
+      const data = getCompanyData();
+      if (!data || !els.period.value || !els.reportType.value) {
+        renderEmptyReport("기업명, 분석 기간, 리포트 유형을 선택하면 기업분석 결과가 생성됩니다. 기업분석은 산업명 입력값을 참조하지 않습니다.");
+        return;
+      }
+
+      const fin = data.financial;
+      const title = `${data.company} 기업분석`;
+      const detailed = els.reportType.value !== "요약 Brief";
+      const profile = getCompanyProfile(data.analysis, data.company, fin);
+      els.sectionOneTitle.textContent = "1. 기업 기본정보와 사업적 강점";
+      els.sectionTwoTitle.textContent = "2. 주요 사업과 돈 버는 방식";
+      els.sectionThreeTitle.textContent = "3. 사업 포지션 & Revenue / Cost 구조";
+      els.sectionFourTitle.textContent = "4. DART 재무와 그래프 해석";
+      els.financialTable.classList.remove("hidden");
+      els.financialWrap.classList.remove("hidden");
+      els.chainGrid.classList.remove("report-chain");
+      document.getElementById("downloadBtn").textContent = "PDF 내려받기";
+
+      els.reportMeta.innerHTML = ["기업분석", els.period.value, els.reportType.value]
+        .concat(fin.raw ? [`DART ${fin.latestYear}`, "시장 데이터 보완"] : ["샘플/연동 대기"])
+        .map(item => `<span class="badge">${escapeHtml(item)}</span>`).join("");
+      els.reportTitle.textContent = title;
+      els.overviewText.innerHTML = buildCompanySummarySheet(data, fin);
+      els.overviewInsight.textContent = `종합 해석: ${data.analysis.soWhatLead}`;
+      els.chainGrid.innerHTML = [
+        ["핵심 사업", profile.coreBusiness, "무엇으로 돈을 버는가"],
+        ["주요 제품/서비스", profile.mainProducts, "무엇을 파는가"],
+        ["고객/채널", profile.customersAndChannels, "누구에게 어떻게 파는가"],
+        ["표방 가치/전략", profile.statedValue, "회사가 강조하는 방향"],
+        ["사업모델", profile.businessModel, "매출과 이익이 만들어지는 방식"],
+        ["재무 스냅샷", `매출 ${fin.revenue} / EBIT ${fin.ebit}`, "사업 설명의 결과값"]
+      ].map(([label, value, note]) => `
+        <div class="chain-card"><strong>${escapeHtml(label)}</strong><small>${escapeHtml(value)} · ${escapeHtml(note)}</small></div>
+      `).join("");
+      els.chainInsight.textContent = "기업분석은 회사가 무엇을 하고 어떤 가치를 내세우는지에서 시작합니다. 재무는 그 사업 설명이 실제 매출, 이익, 현금흐름으로 이어졌는지 확인하는 근거입니다.";
+      const structureRows = data.analysis.businessStructure.map(item => [
+        item.segment,
+        `${item.whatItDoes} / ${item.revenueLogic}`,
+        `${item.marginLogic} → ${item.soWhat}`
+      ]);
+      const revenueRows = data.analysis.revenueCost.map(row => [row.item, row.mechanism, row.soWhat]);
+      els.revenueCostBody.innerHTML = [...structureRows, ...revenueRows].map(row => `
+        <tr><td><strong>${escapeHtml(row[0])}</strong></td><td>${escapeHtml(row[1])}</td><td>${escapeHtml(row[2])}</td></tr>
+      `).join("");
+      renderCompanyFinancialTable(data, fin);
+      setCompanyGraphGrid(buildCompanyGraphs(data, fin));
+      renderCompanyDetailPanels(data, fin, detailed);
+      els.financialInsight.textContent = `핵심 해석: ${fin.insight}`;
+      els.sourceLine.textContent = `출처: ${fin.source}`;
+      els.dartStatus.textContent = fin.raw
+        ? `${data.company} 기업 기본정보, 사업 구조, DART 재무를 반영한 분석을 생성했습니다.`
+        : fin.sampleKey
+          ? `${data.company} 샘플 재무 인사이트가 표시되었습니다. 분석 생성을 누르면 OpenDART 최신 데이터로 갱신합니다.`
+          : `${data.company}는 기업 코드 매칭이 필요합니다.`;
+      state.markdown = buildCompanyMarkdown(title, data, fin);
+    }
+
+    function renderCompanyDetailPanels(data, fin, detailed) {
+      els.valuationGrid.classList.remove("hidden");
+      els.valuationGrid.innerHTML = [
+        ["발행주식수", fin.noOfShares || "보완 필요", "OpenDART 주식의 총수 현황"],
+        ["주가", fin.stockPrice || "보완 필요", fin.priceDate ? `${fin.priceDate} 기준` : "최신 거래일 기준"],
+        ["시가총액", fin.marketCap || "확인 필요", "발행주식수 x 주가"],
+        ["PER", fin.per || "확인 필요", "시가총액 / 당기순이익"],
+        ["EV / EBITDA", fin.evEbitda || "확인 필요", "기업가치 / EBITDA"],
+        ["DART 품질", fin.raw ? `${fin.raw.quality.score}` : "연동 대기", fin.raw ? fin.raw.quality.checks.join(" · ") : "연동 설정과 기업 코드 확인 필요"]
+      ].map(([label, value, note]) => `
+        <div class="metric-card"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong><small>${escapeHtml(note)}</small></div>
+      `).join("");
+
+      if (!detailed) {
+        els.companyDetailGrid.classList.add("hidden");
+        els.marketResearchPanel.classList.remove("hidden");
+        els.marketResearchPanel.innerHTML = `<strong>요약 Brief</strong>${data.analysis.onePageBrief.map(item => `• ${escapeHtml(item)}`).join("<br>")}`;
+        return;
+      }
+
+      els.companyDetailGrid.classList.remove("hidden");
+      els.companyDetailGrid.innerHTML = [
+        ["사업적 강점", data.analysis.investmentHighlights],
+        ["리스크 요인", data.analysis.riskFactors],
+        ["요약 Brief", data.analysis.onePageBrief],
+        ["출처", [data.analysis.sourceNote]]
+      ].map(([title, lines]) => `
+        <div class="detail-panel"><h4>${escapeHtml(title)}</h4><ul>${lines.map(line => `<li>${escapeHtml(line)}</li>`).join("")}</ul></div>
+      `).join("");
+
+      els.marketResearchPanel.classList.remove("hidden");
+      const sources = fin.marketSources && fin.marketSources.length
+        ? fin.marketSources.map(source => `${source.type}: ${source.name}${source.symbol ? ` (${source.symbol})` : ""}${source.basis ? ` / ${source.basis}` : ""}`)
+        : ["Naver Finance, KRX, 회사 IR: 주가와 발행주식수 참고"];
+      els.marketResearchPanel.innerHTML = `<strong>시장 데이터 출처</strong>${sources.map(escapeHtml).join("<br>")}`;
+    }
+
+    async function generateAnalysis() {
+      if (state.mode !== "company") {
+        await generateReport();
+        return;
+      }
+      await loadCompanyFinancials();
+    }
+
+    async function loadCompanyFinancials() {
+      const company = els.companyName.value.trim();
+      if (!company || !els.period.value || !els.reportType.value) {
+        renderReport();
+        return;
+      }
+
+      state.loadingCompany = true;
+      els.loading.classList.add("active");
+      els.dartStatus.textContent = `${company} 기업 코드를 찾고 DART 5개년 재무를 조회하는 중입니다.`;
+      try {
+        const resolved = await fetchJson(`/api/company/resolve?q=${encodeURIComponent(company)}`);
+        const match = (resolved.matches || []).find(item => item.stock_code) || (resolved.matches || [])[0];
+        if (!match) throw new Error("기업명을 기업 코드로 매칭하지 못했습니다.");
+        const years = els.period.value.includes("3") ? 3 : 5;
+        const baseYear = Number(els.baseYear.value || new Date().getFullYear() - 1);
+        const params = new URLSearchParams({
+          corp_code: match.corp_code,
+          bsns_year: String(baseYear),
+          years: String(years),
+          report_code: "11011",
+          fs_div: "CFS"
+        });
+        const raw = await fetchJson(`/api/dart/financials?${params.toString()}`);
+        els.dartStatus.textContent = `${match.name || company} DART 재무 기반으로 기업 자체 분석을 생성하는 중입니다.`;
+        const analysisPayload = await postJson("/api/analysis/company", {
+          financials: raw,
+          report_type: els.reportType.value
+        });
+        raw.company_analysis = analysisPayload.generated_by === "openai" ? analysisPayload.analysis : null;
+        raw.company_analysis_generated_by = analysisPayload.generated_by;
+        raw.company_analysis_warning = analysisPayload.warning || "";
+        state.companyFinancials = raw;
+        state.selectedCompany = { input: company, match };
+        els.companyName.value = match.name || company;
+        state.selectedCompany.input = els.companyName.value;
+        renderSourceStack(raw, match);
+        renderReport();
+        showToast(`${match.name || company} 기업분석을 생성했습니다.`);
+      } catch (error) {
+        els.dartStatus.textContent = `DART 자동 조회 실패: ${error.message}`;
+        showToast("DART 조회에 실패해 샘플/대기 상태로 표시합니다.");
+        renderReport();
+      } finally {
+        state.loadingCompany = false;
+        els.loading.classList.remove("active");
+      }
+    }
+
+    function renderSourceStack(raw, match) {
+      const marketData = raw.market_data || {};
+      const sources = [
+        `corp_code ${match.corp_code} / stock_code ${match.stock_code || "없음"}`,
+        `${raw.request.base_year}년 사업보고서 기준 ${raw.request.fs_div}, ${raw.periods.length}개년 조회`,
+        ...(marketData.sources || []).map(source => `${source.type}: ${source.name}${source.symbol ? ` (${source.symbol})` : ""}${source.basis ? ` / ${source.basis}` : ""}`),
+        ...((marketData.warnings || []).map(item => `보완 필요: ${item}`))
+      ];
+      els.companySourceStack.innerHTML = sources.map(item => `<div class="source-item">${escapeHtml(item)}</div>`).join("");
+    }
+
+    async function fetchJson(url) {
+      const response = await fetchWithUiTimeout(apiUrl(url), {}, 45000);
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload.ok === false) {
+        throw new Error(payload.error || `HTTP ${response.status}`);
+      }
+      return payload;
+    }
+
+    async function postJson(url, body) {
+      const response = await fetchWithUiTimeout(apiUrl(url), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      }, 70000);
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload.ok === false) {
+        throw new Error(payload.error || `HTTP ${response.status}`);
+      }
+      return payload;
+    }
+
+    async function fetchWithUiTimeout(url, options = {}, timeoutMs = 45000) {
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        return await fetch(url, { ...options, signal: controller.signal });
+      } catch (error) {
+        if (error.name === "AbortError") {
+          throw new Error("응답 시간이 길어져 요청을 중단했습니다. 잠시 후 다시 시도하거나 샘플 분석을 확인하세요.");
+        }
+        throw error;
+      } finally {
+        window.clearTimeout(timer);
+      }
+    }
+
+    function apiUrl(path) {
+      if (/^https?:\/\//i.test(path)) return path;
+      return `${API_BASE}${path}`;
+    }
+
+    function renderEmptyReport(message) {
+      setDefaultGraphGrid();
+      els.chainGrid.classList.remove("report-chain");
+      els.reportMeta.innerHTML = "";
+      els.reportTitle.textContent = "분석 대기 중";
+      els.sectionOneTitle.textContent = "1. 입력을 완료하세요";
+      els.sectionTwoTitle.textContent = "2. 밸류체인";
+      els.sectionThreeTitle.textContent = "3. Revenue / Cost 구조";
+      els.sectionFourTitle.textContent = state.mode === "industry" ? "4. 시장 규모 및 성장 추이" : "4. DART 재무 인사이트";
+      els.overviewText.innerHTML = `<div class="empty-state">${escapeHtml(message)}</div>`;
+      els.overviewInsight.textContent = "안내: 빈 입력 상태에서는 임의의 산업/기업 데이터를 생성하지 않습니다.";
+      els.chainGrid.innerHTML = "";
+      els.chainInsight.textContent = "";
+      els.revenueCostBody.innerHTML = "";
+      els.financialBody.innerHTML = "";
+      els.ebitdaChart.innerHTML = "";
+      els.cashFlowChart.innerHTML = "";
+      els.valuationGrid.classList.add("hidden");
+      els.companyDetailGrid.classList.add("hidden");
+      els.marketResearchPanel.classList.add("hidden");
+      els.valuationGrid.innerHTML = "";
+      els.companyDetailGrid.innerHTML = "";
+      els.marketResearchPanel.innerHTML = "";
+      els.financialInsight.textContent = "";
+      els.sourceLine.textContent = "";
+      els.financialTable.classList.toggle("hidden", state.mode === "industry");
+      els.financialWrap.classList.toggle("hidden", state.mode === "industry");
+      state.markdown = "";
+    }
+
+    function buildIndustryMarkdown(title, data) {
+      return [
+        `# ${title}`,
+        "",
+        "## 1. 산업 개요",
+        data.industry_overview.executive_summary,
+        "",
+        data.industry_overview.definition,
+        "",
+        `- 분석 범위: ${data.industry_overview.market_scope}`,
+        `- 현재 국면: ${data.industry_overview.current_state}`,
+        `- 수요 측면: ${data.industry_overview.demand_side}`,
+        `- 공급 측면: ${data.industry_overview.supply_side}`,
+        `- 구조 변화: ${data.industry_overview.structural_change}`,
+        "",
+        "## 2. 시장 규모 및 성장 추이",
+        `- 단위: ${data.market_trend.unit}`,
+        ...data.market_trend.series.map(item => `- ${item.year}: ${item.value}${item.is_estimated ? " (estimated)" : ""} / ${item.note}`),
+        `- 성장 코멘트: ${data.market_trend.growth_comment}`,
+        `- 해석: ${data.market_trend.interpretation}`,
+        `- 데이터 주의: ${data.market_trend.data_quality_note}`,
+        "",
+        "## 3. 밸류체인",
+        ...data.value_chain.map(item => `- ${item.stage}: 참여자 ${item.participants} / 역할 ${item.role} / 매출 구조 ${item.revenue_model} / 비용 구조 ${item.cost_structure} / 마진 결정력 ${item.margin_power} / 해석 ${item.report_implication}`),
+        "",
+        "## 4. Revenue / Cost 구조",
+        ...data.revenue_cost_structure.revenue_sources.map(row => `- Revenue | ${row.source}: ${row.mechanism} / 민감도: ${row.sensitivity}`),
+        ...data.revenue_cost_structure.cost_drivers.map(row => `- Cost | ${row.cost}: ${row.mechanism} / 리스크: ${row.risk}`),
+        `- Profit pool: ${data.revenue_cost_structure.profit_pool_insight}`,
+        "",
+        "## 5. 핵심 변수",
+        ...data.key_variables.map(row => `- ${row.variable}: ${row.current_signal} / 산업 영향: ${row.impact_on_industry} / 영향 구간: ${row.affected_value_chain} / 근거: ${row.evidence_to_watch}`),
+        "",
+        "## 6. 산업적 시사점",
+        `- 핵심 결론: ${data.report_implications.core_conclusion}`,
+        ...data.report_implications.implications.map(point => `- ${point}`),
+        ...data.report_implications.discussion_points.map(question => `- Discussion: ${question}`),
+        ...(isDeepIndustryReport(els.reportType.value) ? [
+          "",
+          "## 7. 증권사 리포트형 Deep Dive",
+          `- 핵심 Thesis: ${(data.deep_dive || buildLocalIndustryDeepDive(data.title || "산업")).headline_thesis}`,
+          "",
+          "### 주요 이슈 플로우",
+          ...(data.deep_dive || buildLocalIndustryDeepDive(data.title || "산업")).issue_flow.map(item => `- ${item.issue}: ${item.evidence} → ${item.industry_impact}`),
+          "",
+          "### 세부 섹터 판단",
+          ...(data.deep_dive || buildLocalIndustryDeepDive(data.title || "산업")).subsector_breakdown.map(item => `- ${item.subsector}: ${item.current_condition} / 매출: ${item.revenue_logic} / 병목: ${item.cost_or_bottleneck} / 전망: ${item.outlook}`),
+          "",
+          "### 체크 지표",
+          ...(data.deep_dive || buildLocalIndustryDeepDive(data.title || "산업")).indicator_watch.map(item => `- ${item.indicator}: ${item.current_read} → ${item.why_it_moves_the_sector}`),
+          "",
+          "### 시나리오",
+          ...(data.deep_dive || buildLocalIndustryDeepDive(data.title || "산업")).scenario_analysis.map(item => `- ${item.case_name}: ${item.conditions} → ${item.industry_result}`),
+          "",
+          "### 리스크",
+          ...(data.deep_dive || buildLocalIndustryDeepDive(data.title || "산업")).risk_factors.map(item => `- ${item.risk}: ${item.transmission_path} / Early signal: ${item.early_signal}`)
+        ] : []),
+        "",
+        "## 출처",
+        ...data.sources.map(source => `- ${source.publisher} | ${source.title}: ${source.used_for}${source.url ? ` (${source.url})` : ""}`)
+      ].join("\n");
+    }
+
+    function buildCompanyMarkdown(title, data, fin) {
+      const analysis = data.analysis;
+      const profile = getCompanyProfile(analysis, data.company, fin);
+      return [
+        `# ${title}`,
+        "",
+        "## 1. 기업 기본정보",
+        `- 정체성: ${profile.identity}`,
+        `- 핵심 사업: ${profile.coreBusiness}`,
+        `- 주요 제품/서비스: ${profile.mainProducts}`,
+        `- 고객/채널: ${profile.customersAndChannels}`,
+        `- 표방 가치/전략: ${profile.statedValue}`,
+        `- 돈 버는 방식: ${profile.businessModel}`,
+        "",
+        "## 2. 기업 개요",
+        analysis.companyOverview,
+        `핵심 해석: ${analysis.soWhatLead}`,
+        "",
+        "## 3. 사업 구조",
+        ...analysis.businessStructure.map(item => `- ${item.segment}: ${item.whatItDoes} / 매출 구조: ${item.revenueLogic} / 마진 구조: ${item.marginLogic} → ${item.soWhat}`),
+        "",
+        "## 4. Revenue / Cost 구조",
+        ...analysis.revenueCost.map(row => `- ${row.item}: ${row.mechanism} → ${row.soWhat}`),
+        "",
+        "## 5. DART 재무 인사이트",
+        `- 대상 기업: ${data.company}`,
+        ...analysis.financialSoWhat.map(row => `- ${row.metric}: ${row.value} / ${row.interpretation} → ${row.soWhat}`),
+        `- No. of Shares / Stock Price: ${fin.noOfShares || "리서치 필요"} / ${fin.stockPrice || "리서치 필요"}`,
+        `- Market Cap / PER / EV·EBITDA: ${fin.marketCap || "확인 필요"} / ${fin.per || "확인 필요"} / ${fin.evEbitda || "확인 필요"}`,
+        "",
+        "## 사업적 강점",
+        ...analysis.investmentHighlights.map(item => `- ${item}`),
+        "",
+        "## 리스크 요인",
+        ...analysis.riskFactors.map(item => `- ${item}`),
+        "",
+        `출처 메모: ${analysis.sourceNote}`,
+        `Data source: ${fin.source}`
+      ].join("\n");
+    }
+
+    function renderTrendGraph(container, values, label, options = {}) {
+      if (!container) return;
+      const years = options.years && options.years.length ? options.years : ["2021", "2022", "2023", "2024", "2025"];
+      const width = 520;
+      const height = 184;
+      const pad = { left: 46, right: 24, top: 34, bottom: 34 };
+      const cleanValues = values && values.some(value => Number.isFinite(value) && value !== 0)
+        ? values.map(value => Number.isFinite(value) ? value : 0)
+        : years.map(() => 0);
+      const max = Math.max(...cleanValues, 1);
+      const min = Math.min(...cleanValues, 0);
+      const range = Math.max(max - min, 1);
+      const x = index => pad.left + index * ((width - pad.left - pad.right) / (cleanValues.length - 1));
+      const y = value => height - pad.bottom - ((value - min) / range) * (height - pad.top - pad.bottom);
+      const points = cleanValues.map((value, index) => `${x(index)},${y(value)}`).join(" ");
+      const area = `${pad.left},${height - pad.bottom} ${points} ${width - pad.right},${height - pad.bottom}`;
+      const suffix = options.suffix || "";
+      const labelY = value => Math.max(14, y(value) - 9);
+      const valueLabels = cleanValues.map((value, index) => `
+        <circle cx="${x(index)}" cy="${y(value)}" r="4.5" fill="#31c3b5" stroke="#fff" stroke-width="2"></circle>
+        <text class="graph-value" x="${x(index)}" y="${labelY(value)}" text-anchor="middle">${formatGraphValue(value)}${suffix}</text>
+      `).join("");
+      const yearLabels = cleanValues.map((_, index) => `
+        <text class="graph-label" x="${x(index)}" y="${height - 10}" text-anchor="middle">${years[index] || ""}</text>
+      `).join("");
+
+      container.innerHTML = `
+        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(label)} 추이 그래프">
+          <line x1="${pad.left}" y1="${height - pad.bottom}" x2="${width - pad.right}" y2="${height - pad.bottom}" stroke="#dce3ea" stroke-width="1"></line>
+          <line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${height - pad.bottom}" stroke="#dce3ea" stroke-width="1"></line>
+          <polygon points="${area}" fill="rgba(49,195,181,.12)"></polygon>
+          <polyline points="${points}" fill="none" stroke="#1d6f9f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></polyline>
+          ${valueLabels}
+          ${yearLabels}
+        </svg>
+      `;
+    }
+
+    function formatGraphValue(value) {
+      if (value >= 100) return Math.round(value);
+      return Number(value).toFixed(1).replace(/\.0$/, "");
+    }
+
+    function seriesValues(series) {
+      return Array.isArray(series) ? series.map(item => Number(item.value || 0)) : [0, 0, 0, 0, 0];
+    }
+
+    function reportParagraphs(lines) {
+      return `<div class="report-copy">${lines.filter(Boolean).map(line => `<p>${escapeHtml(line)}</p>`).join("")}</div>`;
+    }
+
+    function reportNotes(rows) {
+      return `<div class="report-subgrid">${rows.filter(row => row[1]).map(([label, body]) => `
+        <div class="report-note"><b>${escapeHtml(label)}</b>${escapeHtml(body)}</div>
+      `).join("")}</div>`;
+    }
+
+    function sourceSummary(sources) {
+      if (!Array.isArray(sources) || !sources.length) return "출처 검증 필요";
+      return sources.map(source => `${source.publisher} - ${source.title} (${source.used_for})`).join(" / ");
+    }
+
+    function isDeepIndustryReport(reportType) {
+      return /심층|deep/i.test(String(reportType || ""));
+    }
+
+    function reportTypeOptions() {
+      return ["요약 Brief", "상세 분석", "심층 분석"];
+    }
+
+    function updateBriefToggleLabel() {
+      const options = reportTypeOptions();
+      const current = els.reportType.value || options[0];
+      const currentIndex = Math.max(options.indexOf(current), 0);
+      const next = options[(currentIndex + 1) % options.length];
+      document.getElementById("briefToggleBtn").textContent = `${next}${koreanParticle(next, "으로", "로")} 보기`;
+    }
+
+    function koreanParticle(text, consonantParticle, vowelParticle) {
+      const stripped = String(text || "").trim().replace(/\s+/g, "");
+      const last = stripped.charCodeAt(stripped.length - 1);
+      if (last < 0xac00 || last > 0xd7a3) return vowelParticle;
+      const hasFinalConsonant = (last - 0xac00) % 28 !== 0;
+      const isRieulFinal = (last - 0xac00) % 28 === 8;
+      return hasFinalConsonant && !isRieulFinal ? consonantParticle : vowelParticle;
+    }
+
+    function toTrillion(value) {
+      return Number.isFinite(value) ? Number((value / 1_0000_0000_0000).toFixed(1)) : 0;
+    }
+
+    function percentPoint(value) {
+      return Number.isFinite(value) ? Number((value * 100).toFixed(1)) : 0;
+    }
+
+    function formatWon(value) {
+      if (!Number.isFinite(value)) return "확인 필요";
+      const abs = Math.abs(value);
+      if (abs >= 1_0000_0000_0000) return `${(value / 1_0000_0000_0000).toFixed(1)}조원`;
+      if (abs >= 1_0000_0000) return `${(value / 1_0000_0000).toFixed(1)}억원`;
+      return `${formatNumber(Math.round(value))}원`;
+    }
+
+    function formatPercent(value) {
+      return Number.isFinite(value) ? `${(value * 100).toFixed(1)}%` : "확인 필요";
+    }
+
+    function formatMultiple(value) {
+      return Number.isFinite(value) ? `${value.toFixed(1)}x` : "확인 필요";
+    }
+
+    function formatNumber(value) {
+      return Number.isFinite(value) ? value.toLocaleString("ko-KR") : "";
+    }
+
+    function normalizeText(value) {
+      return String(value || "").toLowerCase().replaceAll("주식회사", "").replaceAll("(주)", "").replaceAll("㈜", "").replace(/[\s.,·_-]/g, "");
+    }
+
+    function copyMarkdown() {
+      navigator.clipboard.writeText(state.markdown).then(() => showToast("Markdown 리포트를 복사했습니다."));
+    }
+
+    async function downloadReport() {
+      if (!state.markdown) {
+        showToast("먼저 분석을 생성하거나 입력값을 채워주세요.");
+        return;
+      }
+      const previousTitle = document.title;
+      const reportTitle = (els.reportTitle.textContent || "BIT Analysis Report").trim();
+      document.title = `${reportTitle} - BIT Analysis`;
+      document.body.classList.add("print-report");
+      const cleanup = () => {
+        document.body.classList.remove("print-report");
+        document.title = previousTitle;
+        window.removeEventListener("afterprint", cleanup);
+      };
+      window.addEventListener("afterprint", cleanup);
+      showToast("인쇄 창에서 PDF로 저장을 선택하면 전체 리포트를 내려받을 수 있습니다.");
+      window.setTimeout(() => {
+        window.print();
+        window.setTimeout(cleanup, 1200);
+      }, 80);
+    }
+
+    function showToast(message) {
+      els.toast.textContent = message;
+      els.toast.classList.add("show");
+      setTimeout(() => els.toast.classList.remove("show"), 1800);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    document.querySelectorAll("[data-open-workspace]").forEach(el => {
+      el.addEventListener("click", event => {
+        event.preventDefault();
+        openWorkspace();
+      });
+    });
+    document.querySelectorAll("[data-mode]").forEach(button => button.addEventListener("click", () => setMode(button.dataset.mode)));
+    ["industryName", "scope", "period", "reportType", "baseYear"].forEach(id => {
+      document.getElementById(id).addEventListener("input", () => {
+        if (["industryName", "scope", "period", "reportType"].includes(id)) state.industryRequestKey = "";
+        renderReport();
+      });
+      document.getElementById(id).addEventListener("change", () => {
+        if (["industryName", "scope", "period", "reportType"].includes(id)) state.industryRequestKey = "";
+        renderReport();
+      });
+    });
+    document.getElementById("companyName").addEventListener("input", () => {
+      state.companyFinancials = null;
+      state.selectedCompany = null;
+      els.companySourceStack.innerHTML = `<div class="source-item">상세 분석 생성 시 OpenDART 5개년 재무와 시장 데이터 보완값을 함께 조회합니다.</div>`;
+      renderReport();
+    });
+    document.getElementById("generateBtn").addEventListener("click", generateAnalysis);
+    document.getElementById("copyBtn").addEventListener("click", copyMarkdown);
+    document.getElementById("downloadBtn").addEventListener("click", downloadReport);
+    document.getElementById("briefToggleBtn").addEventListener("click", () => {
+      const options = reportTypeOptions();
+      const currentIndex = Math.max(options.indexOf(els.reportType.value), 0);
+      els.reportType.value = options[(currentIndex + 1) % options.length];
+      state.industryRequestKey = "";
+      renderReport();
+      updateBriefToggleLabel();
+    });
+    document.getElementById("backBtn").addEventListener("click", closeWorkspace);
+
+    renderReport();
+    updateBriefToggleLabel();
+    if (location.hash === "#workspace") {
+      els.landing.classList.add("hidden");
+      els.workspace.classList.remove("hidden");
+    }
+  </script>
+</body>
+</html>
