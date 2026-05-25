@@ -137,7 +137,7 @@ class AiMatchRequest(BaseModel):
 
 
 @app.post("/api/scholarships/ai-match")
-@limiter.limit("3/day")
+@limiter.limit("2/day")
 def ai_match(request: Request, req: AiMatchRequest):
     user_tags = [t.strip() for t in req.tags.split(",")] if req.tags else None
     user_regions = [r for r in [req.residence, req.hometown] if r] or None
