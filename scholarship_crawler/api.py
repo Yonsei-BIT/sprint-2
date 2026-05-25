@@ -7,14 +7,20 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 import anthropic
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from typing import Optional
 from pydantic import BaseModel
 
 from database import ScholarshipDB
 
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="장학금 검색 API", version="0.2.0")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
@@ -131,7 +137,8 @@ class AiMatchRequest(BaseModel):
 
 
 @app.post("/api/scholarships/ai-match")
-def ai_match(req: AiMatchRequest):
+@limiter.limit("3/day")
+def ai_match(request: Request, req: AiMatchRequest):
     user_tags = [t.strip() for t in req.tags.split(",")] if req.tags else None
     user_regions = [r for r in [req.residence, req.hometown] if r] or None
 
