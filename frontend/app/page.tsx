@@ -4,7 +4,7 @@ import FilterPanel, { type Filters } from "@/components/FilterPanel";
 import ScholarshipCard, { type Scholarship } from "@/components/ScholarshipCard";
 import ProfileModal, { type UserProfile, loadProfile, EMPTY_PROFILE, profileToText } from "@/components/ProfileModal";
 
-const API = "http://localhost:8000";
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const DEFAULT_FILTERS: Filters = { gpa: "", income: "", year: "", major: "" };
 
