@@ -18,3 +18,9 @@ node_modules/
 # IDE
 .idea/
 .vscode/
+
+# Claude Code
+.claude/
+
+# Build artifacts
+*.tsbuildinfo

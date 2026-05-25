@@ -5,7 +5,7 @@ from typing import Optional
 
 from sqlalchemy import (
     Boolean, Column, Date, DateTime, Float, Integer,
-    String, Text, create_engine, select, func, text
+    String, Text, create_engine, select, func, text, or_
 )
 from sqlalchemy.orm import DeclarativeBase, Session
 
@@ -191,6 +191,10 @@ class ScholarshipDB:
                 stmt = stmt.where(ScholarshipRow.source == source)
             if active_only:
                 stmt = stmt.where(ScholarshipRow.is_active == True)
+                today = date.today()
+                stmt = stmt.where(
+                    or_(ScholarshipRow.apply_end == None, ScholarshipRow.apply_end >= today)
+                )
 
             rows = session.execute(stmt).scalars().all()
             results = [_from_row(r) for r in rows]

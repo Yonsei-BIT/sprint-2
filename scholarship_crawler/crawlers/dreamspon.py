@@ -53,7 +53,7 @@ class DreamsponCrawler(BaseCrawler):
                         results.append(s)
                     await asyncio.sleep(0.8)
                 except Exception as e:
-                    # 상세 실패 시 목록 정보만으로 저장
+                    print(f"[dreamspon] 상세 파싱 오류 ({item['name']}): {e}")
                     fallback = self._make_from_list(item)
                     if fallback and fallback.is_active:
                         results.append(fallback)
@@ -120,8 +120,13 @@ class DreamsponCrawler(BaseCrawler):
         soup = BeautifulSoup(html, "lxml")
         body_text = soup.get_text(separator="\n")
 
-        # 상세 내용 마스킹 여부 확인
-        is_masked = body_text.count("*") > 30
+        # 상세 내용 마스킹 여부 확인 (로그인 필요 페이지 감지)
+        star_count = body_text.count("*")
+        has_login_form = bool(soup.select("input[type='password'], input[name*='password'], input[name*='passwd'], input[id*='password']"))
+        info_keywords = ["신청자격", "지원자격", "대상", "신청기간", "접수기간", "지원금액", "장학금액", "모집요강"]
+        has_info_text = any(kw in body_text for kw in info_keywords)
+        is_masked = star_count > 30 or has_login_form or not has_info_text
+        print(f"[dreamspon] '{item['name']}' 마스킹={is_masked} (별표={star_count}, 로그인폼={has_login_form}, 정보텍스트={has_info_text})")
 
         eligibility, docs, amount_text = "", [], ""
         apply_start, apply_end = None, None
@@ -142,20 +147,29 @@ class DreamsponCrawler(BaseCrawler):
                     elif "기간" in key or "신청" in key:
                         apply_start, apply_end = self._extract_period(val)
         else:
-            # 마스킹 상태: 공개된 이미지에서 Vision API로 정보 추출
-            raw_imgs = [img.get("src", "") for img in soup.select("img[src]")]
-            _SKIP = ("icon", "logo", "btn", "arrow", "bullet", "banner_sm", "bg_")
-            img_urls = []
-            for u in raw_imgs:
+            # 마스킹 상태: 공개된 포스터 이미지에서 Vision API로 정보 추출
+            _SKIP = ("icon", "logo", "btn", "arrow", "bullet", "banner_sm", "bg_", "common", "layout", "naver", "kakao")
+            _PREFER = ("upload", "poster", "thumb", "banner", "scholarship", "notice", "board", "file")
+            preferred, others = [], []
+            for img in soup.select("img[src]"):
+                u = img.get("src", "")
                 if not u:
                     continue
                 full = BASE + u if u.startswith("/") else u
-                if not any(s in full.lower() for s in _SKIP):
-                    img_urls.append(full)
+                if any(s in full.lower() for s in _SKIP):
+                    continue
+                if any(p in full.lower() for p in _PREFER):
+                    preferred.append(full)
+                else:
+                    others.append(full)
+            img_urls = preferred + others
+            print(f"[dreamspon] 마스킹 이미지 후보: preferred={len(preferred)}, others={len(others)}")
+            for u in img_urls[:5]:
+                print(f"  → {u}")
 
             if img_urls:
-                print(f"[dreamspon] 마스킹 감지 → Vision 추출 시도 ({len(img_urls)}장)")
-                extracted = await self.ai_extract_from_images(img_urls, item["name"])
+                print(f"[dreamspon] Vision 추출 시도 ({len(img_urls)}장)")
+                extracted = await self.ai_extract_from_images(img_urls, item["name"], referer=item["url"])
                 if extracted:
                     amount_text = extracted.get("amount_text") or ""
                     eligibility = extracted.get("eligibility") or ""

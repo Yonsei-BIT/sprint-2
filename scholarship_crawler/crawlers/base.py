@@ -123,12 +123,17 @@ class BaseCrawler(ABC):
         "업무처리기준", "근로기관", "담당자", "만족도", "설문", "보도자료",
         "행정예고", "우수사례", "수기 공모", "취업약정", "홈페이지 오류",
         "시스템 점검", "시스템점검", "인터뷰", "언론",
+        # 장학금 공고가 아닌 콘텐츠
+        "꿀팁", "MOU",
     ]
     # 이 키워드가 제목에 있고, 아래 허용 키워드가 없으면 제외
     _SOFT_EXCLUDE = [
         "선발 결과", "선발결과", "결과 발표", "결과발표", "결과 안내",
         "운영 안내", "운영안내", "작성 안내", "작성요령", "작성방법",
         "처리 기준", "기준 안내", "지급 결과", "지급결과",
+        # 장학금 신청과 무관한 행정/운영 공지
+        "멘토링", "서포터즈",
+        "포기", "반환", "변경 안내",
     ]
     # 이 키워드 중 하나라도 있으면 soft_exclude 무력화 (신청 공고로 인정)
     _ALLOW_KEYWORDS = ["신청", "모집", "공고", "선발 안내", "지원 안내"]
@@ -198,7 +203,7 @@ class BaseCrawler(ABC):
         return await asyncio.to_thread(_sync)
 
     @staticmethod
-    async def ai_extract_from_images(image_urls: list[str], scholarship_name: str = "", user_agent: str = "") -> dict:
+    async def ai_extract_from_images(image_urls: list[str], scholarship_name: str = "", user_agent: str = "", referer: str = "") -> dict:
         """이미지에서 Claude Vision API로 장학금 정보 추출. 실패 시 빈 dict."""
         def _sync() -> dict:
             import os, base64, json
@@ -214,24 +219,33 @@ class BaseCrawler(ABC):
                 import anthropic
                 import requests as req
                 client = anthropic.Anthropic(api_key=api_key)
-                headers = {"User-Agent": user_agent or "Mozilla/5.0"}
+                headers = {
+                    "User-Agent": user_agent or "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36",
+                }
+                if referer:
+                    headers["Referer"] = referer
                 content = []
                 for url in image_urls[:3]:
                     try:
                         resp = req.get(url, headers=headers, timeout=15)
                         if resp.status_code != 200:
+                            print(f"[vision] 이미지 다운로드 실패: HTTP {resp.status_code} → {url}")
                             continue
                         ct = resp.headers.get("content-type", "image/jpeg").split(";")[0].strip()
                         if not ct.startswith("image/"):
+                            print(f"[vision] 이미지 아님 (content-type={ct}): {url}")
                             continue
                         b64 = base64.standard_b64encode(resp.content).decode()
                         content.append({
                             "type": "image",
                             "source": {"type": "base64", "media_type": ct, "data": b64},
                         })
-                    except Exception:
+                        print(f"[vision] 이미지 로드 성공: {url}")
+                    except Exception as e:
+                        print(f"[vision] 이미지 요청 오류: {e} ({url})")
                         continue
                 if not content:
+                    print("[vision] 유효한 이미지 없음 → Vision 스킵")
                     return {}
                 content.append({
                     "type": "text",
@@ -254,11 +268,12 @@ class BaseCrawler(ABC):
                     messages=[{"role": "user", "content": content}],
                 )
                 text = msg.content[0].text.strip()
+                print(f"[vision] Claude 응답: {text[:300]}")
                 json_match = re.search(r"\{.*\}", text, re.DOTALL)
                 if json_match:
                     return json.loads(json_match.group())
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[vision] Vision API 오류: {e}")
             return {}
 
         return await asyncio.to_thread(_sync)

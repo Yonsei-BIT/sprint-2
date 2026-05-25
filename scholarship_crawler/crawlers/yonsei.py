@@ -93,9 +93,7 @@ class YonseiCrawler(BaseCrawler):
         html = await page.content()
         soup = BeautifulSoup(html, "lxml")
 
-        board = soup.select_one(".board-view")
-        if not board:
-            board = soup
+        board = soup.select_one(".board-view") or soup
 
         # 기간 파싱 (기간: 2026.05.26 ~ 2026.06.12)
         apply_start, apply_end = None, None
@@ -116,30 +114,51 @@ class YonseiCrawler(BaseCrawler):
             except ValueError:
                 pass
 
-        # 만료 판단
         is_active = True
         if apply_end and apply_end < TODAY:
             is_active = False
 
-        # 본문 텍스트 (제목/메타 제거)
-        content = full_text
-
-        # 첨부파일
+        # 첨부파일 URL + 인라인 이미지 URL 수집
         attachment_urls = self.extract_attachment_urls(soup, "https://www.yonsei.ac.kr")
-        attachment_text = ""
-        for au in attachment_urls:
-            if au.lower().endswith(".pdf"):
-                txt = await self.extract_pdf_text(au)
-                if txt:
-                    attachment_text += txt + "\n"
-                    break
+        image_urls = self.extract_inline_image_urls(soup, "https://www.yonsei.ac.kr")
 
-        full_content = content + "\n" + attachment_text
+        # PDF 추출 + 이미지 Vision 분석 동시 실행
+        first_pdf = next((a for a in attachment_urls if a.lower().endswith(".pdf")), "")
 
+        async def _no_img() -> dict:
+            return {}
+
+        attachment_text, img_data = await asyncio.gather(
+            self.extract_pdf_text(first_pdf),
+            self.ai_extract_from_images(image_urls, title, referer=url) if image_urls else _no_img(),
+        )
+
+        # 이미지에서 날짜·금액 보완
+        if img_data:
+            if not apply_start and img_data.get("apply_start") not in (None, "null"):
+                try:
+                    apply_start = date.fromisoformat(img_data["apply_start"])
+                except (ValueError, TypeError):
+                    pass
+            if not apply_end and img_data.get("apply_end") not in (None, "null"):
+                try:
+                    apply_end = date.fromisoformat(img_data["apply_end"])
+                    is_active = apply_end >= TODAY
+                except (ValueError, TypeError):
+                    pass
+
+        # 텍스트 + PDF + 이미지 자격 정보를 합쳐 full_content 구성
+        full_content = full_text + "\n" + attachment_text
+        if img_data and img_data.get("eligibility") not in (None, "null"):
+            full_content += "\n[이미지 추출] " + img_data["eligibility"]
+
+        # 통합된 full_content 기준으로 필드 파싱
         gpa_min, gpa_scale = self.parse_gpa(full_content)
         income_max = self._extract_income(full_content)
         years = self.parse_years(full_content)
         amount_text = self._extract_amount(full_content)
+        if not amount_text and img_data and img_data.get("amount_text") not in (None, "null"):
+            amount_text = img_data["amount_text"]
         docs = self._extract_docs(full_content)
 
         region = self.parse_region(full_content)
@@ -147,31 +166,9 @@ class YonseiCrawler(BaseCrawler):
         enrollment_required = self.parse_enrollment_required(full_content)
         special_tags = self.parse_special_tags(full_content)
         no_duplicate = self.parse_no_duplicate(full_content)
-
         apply_url = self.extract_apply_url(full_content)
 
-        # 이미지 포스터에서 정보 보완 (날짜·금액 파싱 실패 시 또는 이미지만 있는 경우)
-        image_urls = self.extract_inline_image_urls(soup, "https://www.yonsei.ac.kr")
-        if image_urls:
-            img_data = await self.ai_extract_from_images(image_urls, title)
-            if img_data:
-                if not apply_start and img_data.get("apply_start") not in (None, "null"):
-                    try:
-                        apply_start = date.fromisoformat(img_data["apply_start"])
-                    except (ValueError, TypeError):
-                        pass
-                if not apply_end and img_data.get("apply_end") not in (None, "null"):
-                    try:
-                        apply_end = date.fromisoformat(img_data["apply_end"])
-                        is_active = apply_end >= TODAY
-                    except (ValueError, TypeError):
-                        pass
-                if not amount_text and img_data.get("amount_text") not in (None, "null"):
-                    amount_text = img_data["amount_text"]
-                # 이미지 자격 정보를 eligibility_text에 추가
-                if img_data.get("eligibility") not in (None, "null"):
-                    full_content = full_content + "\n[이미지 추출] " + img_data["eligibility"]
-
+        # AI 요약: 텍스트 + 이미지 통합 내용 기반
         ai_summary = await self.ai_summarize(title, full_content)
 
         uid = hashlib.md5(url.encode()).hexdigest()[:12]
@@ -181,7 +178,7 @@ class YonseiCrawler(BaseCrawler):
             source_url=url,
             name=title,
             organization="연세대학교",
-            description=content[:300],
+            description=full_text[:300],
             amount_text=amount_text,
             gpa_min=gpa_min,
             gpa_scale=gpa_scale,
