@@ -1,0 +1,1721 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>사진 정리 도우미</title>
+  <style>
+    :root {
+      --ink: #191f28;
+      --muted: #6b7684;
+      --soft: #8b95a1;
+      --line: #edf0f3;
+      --paper: #f4f6f8;
+      --panel: #ffffff;
+      --blue: #3182f6;
+      --blue-dark: #1b64da;
+      --blue-soft: #e8f3ff;
+      --red: #f04452;
+      --red-soft: #fff0f2;
+      --green: #00a881;
+      --green-soft: #e7f8f3;
+      --shadow: 0 18px 44px rgba(25, 31, 40, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      letter-spacing: 0;
+    }
+
+    button, input, select {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(244,246,248,0.88);
+      color: var(--ink);
+      padding: 16px 28px 8px;
+      display: grid;
+      grid-template-columns: minmax(220px, auto) minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(237,240,243,0.88);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-height: 44px;
+    }
+
+    .brand-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #3182f6, #58c2ff);
+      position: relative;
+      box-shadow: 0 8px 20px rgba(49,130,246,0.28);
+    }
+
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      left: 12px;
+      top: 11px;
+      width: 16px;
+      height: 18px;
+      border-radius: 7px;
+      background: white;
+      box-shadow: 8px -4px 0 rgba(255,255,255,0.55);
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .brand span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .nav {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .nav button {
+      height: 40px;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0 14px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .nav button.active,
+    .nav button:hover {
+      background: #ffffff;
+      color: var(--ink);
+      box-shadow: 0 8px 18px rgba(25,31,40,0.06);
+    }
+
+    .icon {
+      width: 18px;
+      height: 18px;
+      display: inline-grid;
+      place-items: center;
+      color: currentColor;
+      flex: 0 0 18px;
+    }
+
+    .privacy-card {
+      display: none;
+    }
+
+    .privacy-card h2 {
+      font-size: 14px;
+      margin: 0 0 8px;
+    }
+
+    .privacy-card p {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.55;
+      color: #cbd8d3;
+    }
+
+    .main {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 46px 0 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      min-width: 0;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .title h1 {
+      margin: 0;
+      max-width: 640px;
+      font-size: clamp(34px, 5vw, 56px);
+      line-height: 1.08;
+      letter-spacing: 0;
+      font-weight: 800;
+    }
+
+    .title p {
+      margin: 14px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 17px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      min-height: 48px;
+      border-radius: 14px;
+      padding: 0 18px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--ink);
+      background: #eef1f4;
+      border: 1px solid transparent;
+      white-space: nowrap;
+      font-weight: 700;
+    }
+
+    .btn.primary {
+      background: var(--blue);
+      color: white;
+      box-shadow: 0 10px 24px rgba(49,130,246,0.24);
+    }
+
+    .btn.primary:hover {
+      background: var(--blue-dark);
+    }
+
+    .btn.warn {
+      background: var(--red-soft);
+      color: #d43645;
+      border-color: #ffd9de;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(340px, 0.8fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      padding: 17px 18px 12px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 0;
+    }
+
+    .panel-head p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .status-pill {
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 12px;
+      white-space: nowrap;
+      background: var(--blue-soft);
+      color: var(--blue);
+      border: 1px solid #d7eaff;
+      font-weight: 750;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .metric {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 22px;
+      min-height: 126px;
+      box-shadow: 0 10px 28px rgba(25,31,40,0.04);
+    }
+
+    .metric span {
+      color: var(--muted);
+      display: block;
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 15px;
+      font-size: 31px;
+      line-height: 1;
+    }
+
+    .metric small {
+      display: block;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .album-list {
+      display: grid;
+      gap: 10px;
+      padding: 18px;
+    }
+
+    .album-row {
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 14px;
+      background: #ffffff;
+      cursor: pointer;
+      transition: transform 160ms ease, box-shadow 160ms ease;
+    }
+
+    .album-row:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 30px rgba(25,31,40,0.07);
+    }
+
+    .thumbs {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 3px;
+      width: 72px;
+      height: 72px;
+      overflow: hidden;
+      border-radius: 18px;
+      background: #edf2f7;
+    }
+
+    .photo {
+      min-width: 0;
+      min-height: 0;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .p1 { background: linear-gradient(135deg, #b9e4ff, #3182f6 48%, #a3e7d8); }
+    .p2 { background: linear-gradient(135deg, #eaf4ff, #72b8ff 50%, #c5d8ff); }
+    .p3 { background: linear-gradient(135deg, #fff1c8, #ffb86b 46%, #ffd6e0); }
+    .p4 { background: linear-gradient(135deg, #f2f4f6, #8b95a1 44%, #333d4b); }
+    .p5 { background: linear-gradient(135deg, #ffe5ec, #ff7b9c 50%, #a36bff); }
+    .p6 { background: linear-gradient(135deg, #dbfff3, #7ce7c7 50%, #92b5ff); }
+
+    .album-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+
+    .album-title input {
+      border: 0;
+      background: transparent;
+      font-weight: 750;
+      color: var(--ink);
+      width: min(100%, 260px);
+      min-height: 30px;
+      padding: 0;
+    }
+
+    .tag {
+      font-size: 11px;
+      border-radius: 999px;
+      padding: 5px 8px;
+      background: #f2f4f6;
+      color: var(--muted);
+      border: 1px solid #eceff2;
+      font-weight: 700;
+    }
+
+    .album-meta {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+    }
+
+    .icon-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: #f2f4f6;
+      color: var(--ink);
+      border: 1px solid #edf0f3;
+    }
+
+    .icon-btn:hover {
+      background: #e8f3ff;
+      color: var(--blue);
+    }
+
+    .icon-btn.deny {
+      background: var(--red-soft);
+      color: #d43645;
+      border-color: #ffd9de;
+    }
+
+    .settings {
+      padding: 16px;
+      display: grid;
+      gap: 13px;
+    }
+
+    .setting {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 18px;
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: center;
+      background: #ffffff;
+    }
+
+    .setting strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .setting span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .switch {
+      width: 48px;
+      height: 28px;
+      border-radius: 999px;
+      background: #ccd5d0;
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    .switch.on {
+      background: var(--blue);
+    }
+
+    .switch::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.22);
+      transition: transform 160ms ease;
+    }
+
+    .switch.on::after {
+      transform: translateX(20px);
+    }
+
+    .review-list {
+      display: grid;
+      gap: 12px;
+      padding: 18px;
+    }
+
+    .review-group {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: #fbfcfb;
+      overflow: hidden;
+      transition: transform 160ms ease, box-shadow 160ms ease;
+    }
+
+    .review-group:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 32px rgba(25,31,40,0.08);
+    }
+
+    .review-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .review-top strong {
+      font-size: 14px;
+    }
+
+    .review-top span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .strip {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(54px, 1fr));
+      gap: 8px;
+      padding: 12px;
+    }
+
+    .candidate {
+      aspect-ratio: 4 / 5;
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      border: 2px solid transparent;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .candidate.keep {
+      border-color: var(--blue);
+    }
+
+    .candidate.delete {
+      border-color: var(--red);
+    }
+
+    .review-reason {
+      margin: 0 12px 12px;
+      border-radius: 16px;
+      background: #f3f7ff;
+      color: #225ca3;
+      padding: 11px 12px;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .badge {
+      position: absolute;
+      left: 6px;
+      bottom: 6px;
+      max-width: calc(100% - 12px);
+      border-radius: 6px;
+      padding: 4px 6px;
+      background: rgba(23,32,28,0.76);
+      color: white;
+      font-size: 10px;
+      line-height: 1.2;
+    }
+
+    .review-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 0 12px 12px;
+    }
+
+    .review-group {
+      cursor: pointer;
+    }
+
+    .detail-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      background: rgba(25,31,40,0.42);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .detail-backdrop.open {
+      display: flex;
+    }
+
+    .detail-sheet {
+      width: min(1120px, 100%);
+      max-height: min(840px, calc(100vh - 48px));
+      background: #ffffff;
+      border-radius: 28px;
+      box-shadow: 0 24px 80px rgba(25,31,40,0.24);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .detail-head {
+      padding: 22px 24px 16px;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .detail-head h2 {
+      margin: 0;
+      font-size: 23px;
+    }
+
+    .detail-head p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .detail-grid {
+      padding: 18px;
+      overflow: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .album-photo-grid {
+      padding: 18px;
+      overflow: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 12px;
+    }
+
+    .album-photo-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      background: #f8fafb;
+      text-align: left;
+      cursor: zoom-in;
+    }
+
+    .album-photo-thumb {
+      height: 172px;
+      background-size: cover;
+      background-position: center;
+      background-color: #111820;
+    }
+
+    .album-photo-label {
+      padding: 9px 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .detail-photo {
+      border: 2px solid transparent;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #f2f4f6;
+      position: relative;
+      min-height: 304px;
+      text-align: left;
+    }
+
+    .detail-photo.selected {
+      border-color: var(--red);
+      box-shadow: 0 0 0 4px #fff0f2;
+    }
+
+    .detail-photo.protected {
+      opacity: 0.62;
+    }
+
+    .detail-thumb {
+      height: 220px;
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-color: #111820;
+      cursor: zoom-in;
+    }
+
+    .detail-label {
+      min-height: 78px;
+      padding: 10px 11px;
+      font-size: 12px;
+      color: var(--muted);
+      display: grid;
+      gap: 7px;
+    }
+
+    .detail-label strong {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--ink);
+      font-size: 13px;
+    }
+
+    .detail-label p {
+      margin: 0;
+      color: #6b7684;
+      line-height: 1.38;
+    }
+
+    .select-row {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      text-align: left;
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .select-row:disabled {
+      cursor: not-allowed;
+    }
+
+    .check-dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: #e5e8eb;
+      color: transparent;
+      flex: 0 0 auto;
+      font-size: 12px;
+    }
+
+    .detail-photo.selected .check-dot {
+      background: var(--red);
+      color: #ffffff;
+    }
+
+    .photo-viewer {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background: rgba(9,14,20,0.82);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+    }
+
+    .photo-viewer.open {
+      display: flex;
+    }
+
+    .photo-viewer-card {
+      width: min(980px, 100%);
+      max-height: calc(100vh - 60px);
+      border-radius: 28px;
+      background: #ffffff;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto;
+      box-shadow: 0 30px 90px rgba(0,0,0,0.35);
+    }
+
+    .photo-viewer-image {
+      min-height: 420px;
+      background: #0d141b center / contain no-repeat;
+    }
+
+    .photo-viewer-info {
+      padding: 16px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .photo-viewer-info strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .photo-viewer-info p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .detail-actions {
+      border-top: 1px solid var(--line);
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .detail-count {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .footer-band {
+      border: 1px solid #d7eaff;
+      background: linear-gradient(135deg, #e8f3ff, #ffffff);
+      border-radius: 26px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      color: #174b85;
+    }
+
+    .footer-band strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .footer-band span {
+      display: block;
+      margin-top: 3px;
+      font-size: 12px;
+      color: #4e7cab;
+      line-height: 1.4;
+    }
+
+    .runtime-banner {
+      border: 1px solid #d7eaff;
+      background: linear-gradient(135deg, #ffffff, #e8f3ff);
+      border-radius: 24px;
+      padding: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      box-shadow: 0 10px 28px rgba(49,130,246,0.08);
+    }
+
+    .runtime-banner strong {
+      display: block;
+      font-size: 16px;
+    }
+
+    .runtime-banner span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      background: #17201c;
+      color: white;
+      padding: 12px 14px;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: 180ms ease;
+      pointer-events: none;
+      font-size: 13px;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    [data-view] { display: none; }
+    [data-view].visible { display: block; }
+
+    @media (max-width: 1020px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        padding: 12px 16px 8px;
+        gap: 12px;
+        grid-template-columns: 1fr;
+      }
+
+      .nav {
+        justify-content: flex-start;
+      }
+
+      .privacy-card {
+        display: none;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 680px) {
+      .main {
+        width: min(100% - 28px, 680px);
+        padding: 28px 0 24px;
+      }
+
+      .topbar,
+      .runtime-banner,
+      .footer-band,
+      .detail-actions,
+      .review-actions {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .actions {
+        justify-content: stretch;
+      }
+
+      .btn {
+        justify-content: center;
+        width: 100%;
+      }
+
+      .nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .album-row {
+        grid-template-columns: 72px minmax(0, 1fr);
+      }
+
+      .thumbs {
+        width: 72px;
+        height: 72px;
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .row-actions {
+        grid-column: 1 / -1;
+        justify-content: flex-end;
+      }
+
+      .summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .metric {
+        min-height: 112px;
+        padding: 17px;
+      }
+
+      .strip {
+        grid-template-columns: repeat(3, minmax(58px, 1fr));
+      }
+
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .album-photo-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .detail-thumb {
+        height: 260px;
+      }
+
+      .photo-viewer {
+        padding: 14px;
+      }
+
+      .photo-viewer-image {
+        min-height: 360px;
+      }
+
+      .photo-viewer-info {
+        align-items: stretch;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div>
+          <strong>사진 정리 도우미</strong>
+          <span>Mac Photos 로컬 분석</span>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="주요 화면">
+        <button class="active" data-tab="dashboard" title="요약 화면">
+          <span class="icon">⌂</span><span>요약</span>
+        </button>
+        <button data-tab="albums" title="추천 앨범">
+          <span class="icon">▦</span><span>추천 앨범</span>
+        </button>
+        <button data-tab="cleanup" title="삭제 검토">
+          <span class="icon">⌕</span><span>삭제 검토</span>
+        </button>
+        <button data-tab="privacy" title="개인정보">
+          <span class="icon">◷</span><span>개인정보</span>
+        </button>
+      </nav>
+
+      <section class="privacy-card">
+        <h2>기본 보호 모드</h2>
+        <p>원본 사진은 기기 밖으로 나가지 않습니다. 숨김, 최근 삭제, 공유 앨범은 분석에서 제외됩니다.</p>
+      </section>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="title">
+          <h1>추천만 먼저 보여드립니다</h1>
+          <p>사진 앱의 앨범 추가와 삭제는 사용자가 승인한 항목에만 적용됩니다.</p>
+        </div>
+        <div class="actions">
+          <button class="btn" id="simulateScan"><span class="icon">↻</span>로컬 분석 다시 실행</button>
+          <button class="btn primary" id="approveAll"><span class="icon">✓</span>승인된 변경 반영</button>
+        </div>
+      </header>
+
+      <section class="runtime-banner" id="runtimeBanner">
+        <div>
+          <strong id="runtimeTitle">브라우저 미리보기 모드</strong>
+          <span id="runtimeText">사진 앱 권한 팝업은 Mac 앱으로 실행할 때만 표시됩니다.</span>
+        </div>
+        <button class="btn primary" id="requestAccess"><span class="icon">◷</span>사진 접근 요청</button>
+      </section>
+
+      <section class="summary" aria-label="분석 요약">
+        <div class="metric">
+          <span>분석 대상</span>
+          <strong id="analyzedMetric">0</strong>
+          <small>숨김/공유/최근 삭제 제외</small>
+        </div>
+        <div class="metric">
+          <span>추천 앨범</span>
+          <strong id="albumMetric">0</strong>
+          <small>승인 전까지 미반영</small>
+        </div>
+        <div class="metric">
+          <span>삭제 검토 묶음</span>
+          <strong id="reviewMetric">0</strong>
+          <small>즐겨찾기 자동 보호</small>
+        </div>
+        <div class="metric">
+          <span>서버 전송</span>
+          <strong>OFF</strong>
+          <small>기기 안에서만 분석</small>
+        </div>
+      </section>
+
+      <section data-view="dashboard" class="visible">
+        <div class="grid">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>오늘의 추천 앨범</h2>
+                <p>한국어 이름은 자동 생성되며, 승인 전에 직접 고칠 수 있습니다.</p>
+              </div>
+              <span class="status-pill">승인 대기</span>
+            </div>
+            <div class="album-list" id="dashboardAlbums"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>삭제 검토 제안드립니다</h2>
+                <p>자동 삭제는 하지 않습니다. 대표 보존 사진과 후보만 묶어서 보여줍니다.</p>
+              </div>
+              <span class="status-pill">46묶음</span>
+            </div>
+            <div class="review-list" id="dashboardReviews"></div>
+          </section>
+        </div>
+      </section>
+
+      <section data-view="albums">
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>추천 앨범 전체</h2>
+              <p>마음에 드는 묶음이 없으면 새로운 관점으로 다시 추천받을 수 있습니다.</p>
+            </div>
+            <button class="btn primary" id="newAlbumRecommendations"><span class="icon">↻</span>새로운 앨범 추천 받기</button>
+          </div>
+          <div class="album-list" id="allAlbums"></div>
+        </section>
+      </section>
+
+      <section data-view="cleanup">
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>유사 사진과 삭제 후보</h2>
+              <p>같은 맥락, 장소, 시간대, 연사 여부를 기준으로 검토 묶음을 만듭니다.</p>
+            </div>
+            <span class="status-pill">실제 삭제 전 확인</span>
+          </div>
+          <div class="review-list" id="allReviews"></div>
+        </section>
+      </section>
+
+      <section data-view="privacy">
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>개인정보 보호 설정</h2>
+              <p>첫 버전은 로컬 분석만 사용합니다. 서버 전송 옵션은 꺼져 있으며 민감도를 낮출 방법이 생긴 뒤에만 열어둡니다.</p>
+            </div>
+            <span class="status-pill">보호 우선</span>
+          </div>
+          <div class="settings">
+            <div class="setting">
+              <div>
+                <strong>원본 사진 로컬 처리</strong>
+                <span>분류와 유사도 계산을 Mac 안에서 실행합니다.</span>
+              </div>
+              <button class="switch on" aria-label="원본 사진 로컬 처리 켜짐"></button>
+            </div>
+            <div class="setting">
+              <div>
+                <strong>서버 전송 차단</strong>
+                <span>원본, 썸네일, 위치 정보가 서버로 전송되지 않습니다.</span>
+              </div>
+              <button class="switch on" aria-label="서버 전송 차단 켜짐"></button>
+            </div>
+            <div class="setting">
+              <div>
+                <strong>숨김/최근 삭제/공유 앨범 제외</strong>
+                <span>민감하거나 소유권이 애매한 항목은 기본 분석 대상에서 제외합니다.</span>
+              </div>
+              <button class="switch on" aria-label="제외 정책 켜짐"></button>
+            </div>
+            <div class="setting">
+              <div>
+                <strong>즐겨찾기 삭제 후보 제외</strong>
+                <span>좋아요를 누른 사진은 삭제 검토 후보로 제안하지 않습니다.</span>
+              </div>
+              <button class="switch on" aria-label="즐겨찾기 보호 켜짐"></button>
+            </div>
+            <div class="setting">
+              <div>
+                <strong>얼굴/인물 식별 금지</strong>
+                <span>사람을 알아보거나 이름으로 묶는 기능은 사용하지 않습니다.</span>
+              </div>
+              <button class="switch on" aria-label="얼굴 식별 금지 켜짐"></button>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="footer-band">
+        <div>
+          <strong>안전 장치</strong>
+          <span>앨범 생성, 사진 추가, 삭제 작업은 모두 승인 뒤에만 진행됩니다. 자동 삭제는 없습니다.</span>
+        </div>
+        <button class="btn primary" id="openPrivacy"><span class="icon">◷</span>보호 설정 보기</button>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <div class="detail-backdrop" id="albumDetail" aria-hidden="true">
+    <section class="detail-sheet" role="dialog" aria-modal="true" aria-labelledby="albumDetailTitle">
+      <div class="detail-head">
+        <div>
+          <h2 id="albumDetailTitle">추천 앨범</h2>
+          <p id="albumDetailSubtitle">이 앨범에 포함될 사진을 확인하세요.</p>
+        </div>
+        <button class="icon-btn" id="closeAlbumDetail" title="닫기">×</button>
+      </div>
+      <div class="album-photo-grid" id="albumDetailGrid"></div>
+      <div class="detail-actions">
+        <span class="detail-count" id="albumDetailCount">0장 포함</span>
+        <div class="actions">
+          <button class="btn primary" id="approveAlbumFromDetail"><span class="icon">✓</span>이 앨범 만들기</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="detail-backdrop" id="reviewDetail" aria-hidden="true">
+    <section class="detail-sheet" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+      <div class="detail-head">
+        <div>
+          <h2 id="detailTitle">삭제 검토</h2>
+          <p id="detailSubtitle">삭제할 사진을 직접 선택하세요.</p>
+        </div>
+        <button class="icon-btn" id="closeDetail" title="닫기">×</button>
+      </div>
+      <div class="detail-grid" id="detailGrid"></div>
+      <div class="detail-actions">
+        <span class="detail-count" id="detailCount">0장 선택됨</span>
+        <div class="actions">
+          <button class="btn" id="clearSelection">선택 해제</button>
+          <button class="btn warn" id="deleteSelected"><span class="icon">⌫</span>선택한 사진 삭제</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="photo-viewer" id="photoViewer" aria-hidden="true">
+    <section class="photo-viewer-card" role="dialog" aria-modal="true" aria-labelledby="viewerTitle">
+      <div class="photo-viewer-image" id="viewerImage"></div>
+      <div class="photo-viewer-info">
+        <div>
+          <strong id="viewerTitle">사진 보기</strong>
+          <p id="viewerReason">삭제 후보 이유를 확인하세요.</p>
+        </div>
+        <button class="btn" id="closeViewer">닫기</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    let albums = [
+      { name: "2025 제주 여행", type: "AI 발견", count: 428, meta: "위치와 날짜 기반으로 묶음", colors: ["p1", "p2", "p3"], approved: true },
+      { name: "문서와 영수증", type: "기본", count: 311, meta: "스크린샷과 문서 사진 중심", colors: ["p4", "p6", "p2"], approved: true },
+      { name: "카페 디저트", type: "AI 발견", count: 186, meta: "음식 카테고리에서 세분화", colors: ["p3", "p5", "p6"], approved: false },
+      { name: "운동 기록 캡처", type: "AI 발견", count: 94, meta: "스크린샷과 날짜 패턴", colors: ["p4", "p2", "p1"], approved: true },
+      { name: "밤과 야경", type: "기본", count: 152, meta: "저조도 풍경 사진", colors: ["p4", "p2", "p5"], approved: false },
+      { name: "제품 비교 사진", type: "AI 발견", count: 73, meta: "비슷한 구도와 쇼핑 사진", colors: ["p6", "p3", "p4"], approved: true }
+    ];
+
+    let reviews = [
+      { title: "강릉 바다 연사 사진", meta: "12장 중 3장 삭제 검토", reason: "흐림과 유사 구도", colors: ["p2", "p2", "p1", "p4", "p2"] },
+      { title: "회의 자료 스크린샷", meta: "8장 중 5장 삭제 검토", reason: "중복 스크린샷", colors: ["p4", "p4", "p4", "p6", "p4"] },
+      { title: "단체 사진 후보", meta: "6장 중 2장 삭제 검토", reason: "눈 감음 가능성", colors: ["p5", "p1", "p5", "p3", "p5"] },
+      { title: "카페 메뉴 사진", meta: "9장 중 4장 삭제 검토", reason: "비슷한 구도", colors: ["p3", "p6", "p3", "p5", "p3"] }
+    ];
+
+    const icons = {
+      approve: "✓",
+      deny: "×",
+      delete: "⌫",
+      keep: "★",
+      search: "⌕"
+    };
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 2200);
+    }
+
+    function sendNative(action, payload = {}) {
+      if (window.webkit?.messageHandlers?.photoApp) {
+        window.webkit.messageHandlers.photoApp.postMessage({ action, ...payload });
+      } else {
+        showToast("Mac 앱에서 실행하면 사진 앱과 연결됩니다.");
+      }
+    }
+
+    function renderAlbum(album) {
+      const row = document.createElement("article");
+      row.className = "album-row";
+      const albumThumbs = album.thumbnails?.length
+        ? album.thumbnails.slice(0, 6).map(src => `<div class="photo real-photo" style="background-image:url('${src}')"></div>`).join("")
+        : `${album.colors.map(color => `<div class="photo ${color}"></div>`).join("")}${album.colors.map(color => `<div class="photo ${color}"></div>`).join("")}`;
+      row.innerHTML = `
+        <div class="thumbs" aria-hidden="true">
+          ${albumThumbs}
+        </div>
+        <div>
+          <div class="album-title">
+            <input value="${album.name}" aria-label="앨범 이름" />
+            <span class="tag">${album.type}</span>
+          </div>
+          <div class="album-meta">${album.count.toLocaleString()}장 · ${album.meta}</div>
+        </div>
+        <div class="row-actions">
+          <button class="icon-btn approve" title="추천 앨범 승인">${icons.approve}</button>
+          <button class="icon-btn deny" title="추천 앨범 거절">${icons.deny}</button>
+        </div>
+      `;
+      row.querySelector(".approve").addEventListener("click", () => showToast("추천 앨범을 승인 목록에 넣었습니다."));
+      row.querySelector(".approve").addEventListener("click", () => {
+        if (album.id) sendNative("approveAlbum", { id: album.id });
+      });
+      row.querySelector(".deny").addEventListener("click", () => {
+        row.remove();
+        showToast("이 추천 앨범은 반영하지 않습니다.");
+        updateAlbumMetric();
+      });
+      row.querySelector("input").addEventListener("click", event => event.stopPropagation());
+      row.querySelectorAll("button").forEach(button => {
+        button.addEventListener("click", event => event.stopPropagation());
+      });
+      row.addEventListener("click", () => openAlbumDetail(album));
+      return row;
+    }
+
+    let activeAlbum = null;
+
+    function openAlbumDetail(album) {
+      activeAlbum = album;
+      const photos = album.photos?.length
+        ? album.photos
+        : (album.thumbnails || []).map((thumbnail, index) => ({
+            id: `${album.id || "album"}-${index}`,
+            thumbnail,
+            fullImage: thumbnail,
+            label: "앨범 포함"
+          }));
+
+      document.getElementById("albumDetailTitle").textContent = album.name;
+      document.getElementById("albumDetailSubtitle").textContent = `${album.count.toLocaleString()}장 · ${album.meta}`;
+      document.getElementById("albumDetailCount").textContent = `${photos.length.toLocaleString()}장 미리보기`;
+      document.getElementById("albumDetailGrid").innerHTML = photos.map(photo => `
+        <button class="album-photo-card" data-id="${photo.id}">
+          <div class="album-photo-thumb" style="background-image:url('${photo.thumbnail}')"></div>
+          <div class="album-photo-label">${photo.label || "앨범 포함"}</div>
+        </button>
+      `).join("");
+
+      document.querySelectorAll("#albumDetailGrid .album-photo-card").forEach(button => {
+        button.addEventListener("click", () => {
+          const photo = photos.find(item => item.id === button.dataset.id);
+          if (photo) openPhotoViewer({
+            fullImage: photo.fullImage || photo.thumbnail,
+            thumbnail: photo.thumbnail,
+            label: album.name,
+            reason: `${photo.label || "앨범 포함"} · 이 추천 앨범에 들어갈 사진입니다.`
+          });
+        });
+      });
+
+      document.getElementById("albumDetail").classList.add("open");
+      document.getElementById("albumDetail").setAttribute("aria-hidden", "false");
+    }
+
+    function closeAlbumDetail() {
+      document.getElementById("albumDetail").classList.remove("open");
+      document.getElementById("albumDetail").setAttribute("aria-hidden", "true");
+      activeAlbum = null;
+    }
+
+    function renderReview(item) {
+      const group = document.createElement("article");
+      group.className = "review-group";
+      const reviewImages = item.thumbnails?.length ? item.thumbnails.slice(0, 5) : [];
+      const suggestedCount = (item.photos || []).filter(photo => photo.isSuggestedDeletion && !photo.isProtected).length || item.deleteCandidateIdentifiers?.length || 0;
+      group.innerHTML = `
+        <div class="review-top">
+          <div>
+            <strong>${item.title}</strong>
+            <span>${item.meta} · 삭제 후보 ${suggestedCount}장</span>
+          </div>
+          <span class="tag">즐겨찾기 제외됨</span>
+        </div>
+        <div class="strip">
+          ${(reviewImages.length ? reviewImages : item.colors).map((value, index) => `
+            <div class="candidate ${index === 0 ? "keep" : index > 2 ? "delete" : ""} photo ${reviewImages.length ? "real-photo" : value}" ${reviewImages.length ? `style="background-image:url('${value}')"` : ""}>
+              <span class="badge">${index === 0 ? "보존 추천" : index > 2 ? "삭제 검토" : "비교"}</span>
+            </div>
+          `).join("")}
+        </div>
+        <p class="review-reason">${item.reason || "비슷한 사진을 묶어 직접 비교할 수 있게 준비했습니다."}</p>
+        <div class="review-actions">
+          <button class="btn"><span class="icon">${icons.keep}</span>묶음 보존</button>
+          <button class="btn warn"><span class="icon">${icons.search}</span>개별 사진 보기</button>
+        </div>
+      `;
+      group.querySelector(".warn").addEventListener("click", () => showToast("실제 제품에서는 macOS 확인창을 한 번 더 표시합니다."));
+      group.querySelector(".warn").addEventListener("click", () => {
+        openReviewDetail(item);
+      });
+      group.querySelector(".btn").addEventListener("click", () => showToast("이 묶음은 삭제 제안에서 제외했습니다."));
+      group.addEventListener("click", (event) => {
+        if (event.target.closest("button")) return;
+        openReviewDetail(item);
+      });
+      return group;
+    }
+
+    let activeReview = null;
+    let selectedPhotoIds = new Set();
+
+    function openReviewDetail(item) {
+      activeReview = item;
+      selectedPhotoIds = new Set((item.photos || [])
+        .filter(photo => photo.isSuggestedDeletion && !photo.isProtected)
+        .map(photo => photo.id));
+
+      document.getElementById("detailTitle").textContent = item.title;
+      document.getElementById("detailSubtitle").textContent = `${item.reason || item.meta} 사진을 눌러 크게 보고, 삭제할 사진만 선택하세요.`;
+      renderDetailGrid();
+      document.getElementById("reviewDetail").classList.add("open");
+      document.getElementById("reviewDetail").setAttribute("aria-hidden", "false");
+    }
+
+    function closeReviewDetail() {
+      document.getElementById("reviewDetail").classList.remove("open");
+      document.getElementById("reviewDetail").setAttribute("aria-hidden", "true");
+      activeReview = null;
+      selectedPhotoIds = new Set();
+    }
+
+    function renderDetailGrid() {
+      const grid = document.getElementById("detailGrid");
+      const photos = activeReview?.photos || [];
+      grid.innerHTML = photos.map(photo => {
+        const selected = selectedPhotoIds.has(photo.id);
+        return `
+          <article class="detail-photo ${selected ? "selected" : ""} ${photo.isProtected ? "protected" : ""}" data-id="${photo.id}">
+            <div class="detail-thumb" data-id="${photo.id}" style="background-image:url('${photo.fullImage || photo.thumbnail}')"></div>
+            <div class="detail-label">
+              <button class="select-row" data-id="${photo.id}" ${photo.isProtected ? "disabled" : ""}>
+                <strong>
+                  <span>${photo.label}</span>
+                  <span class="check-dot">✓</span>
+                </strong>
+              </button>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      grid.querySelectorAll(".detail-thumb").forEach(thumb => {
+        thumb.addEventListener("click", () => {
+          const photo = photos.find(item => item.id === thumb.dataset.id);
+          if (photo) openPhotoViewer({
+            ...photo,
+            reason: activeReview?.reason || "묶음 기준을 확인한 뒤 삭제 여부를 판단해 주세요."
+          });
+        });
+      });
+
+      grid.querySelectorAll(".select-row").forEach(button => {
+        button.addEventListener("click", () => {
+          const id = button.dataset.id;
+          if (selectedPhotoIds.has(id)) {
+            selectedPhotoIds.delete(id);
+          } else {
+            selectedPhotoIds.add(id);
+          }
+          renderDetailGrid();
+        });
+      });
+
+      document.getElementById("detailCount").textContent = `${selectedPhotoIds.size}장 선택됨`;
+    }
+
+    function openPhotoViewer(photo) {
+      document.getElementById("viewerImage").style.backgroundImage = `url('${photo.fullImage || photo.thumbnail}')`;
+      document.getElementById("viewerTitle").textContent = photo.label || "사진 보기";
+      document.getElementById("viewerReason").textContent = photo.reason || "삭제 여부를 직접 판단해 주세요.";
+      document.getElementById("photoViewer").classList.add("open");
+      document.getElementById("photoViewer").setAttribute("aria-hidden", "false");
+    }
+
+    function closePhotoViewer() {
+      document.getElementById("photoViewer").classList.remove("open");
+      document.getElementById("photoViewer").setAttribute("aria-hidden", "true");
+      document.getElementById("viewerImage").style.backgroundImage = "";
+    }
+
+    function updateAlbumMetric() {
+      document.getElementById("albumMetric").textContent = document.querySelectorAll("#allAlbums .album-row").length;
+    }
+
+    function updateSummary(summary = {}) {
+      document.getElementById("analyzedMetric").textContent = Number(summary.analyzedCount || 0).toLocaleString();
+      document.getElementById("albumMetric").textContent = Number(summary.recommendedAlbumCount || albums.length).toLocaleString();
+      document.getElementById("reviewMetric").textContent = Number(summary.reviewGroupCount || reviews.length).toLocaleString();
+    }
+
+    function setRuntimeStatus(mode, text) {
+      document.getElementById("runtimeTitle").textContent = mode;
+      document.getElementById("runtimeText").textContent = text;
+    }
+
+    function fill(containerId, items, renderer, limit) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = "";
+      items.slice(0, limit || items.length).forEach(item => container.appendChild(renderer(item)));
+    }
+
+    function showTab(name) {
+      document.querySelectorAll("[data-view]").forEach(view => {
+        view.classList.toggle("visible", view.dataset.view === name);
+      });
+      document.querySelectorAll(".nav button").forEach(button => {
+        button.classList.toggle("active", button.dataset.tab === name);
+      });
+    }
+
+    fill("dashboardAlbums", albums, renderAlbum, 3);
+    fill("allAlbums", albums, renderAlbum);
+    fill("dashboardReviews", reviews, renderReview, 2);
+    fill("allReviews", reviews, renderReview);
+    updateSummary({
+      analyzedCount: 18420,
+      recommendedAlbumCount: albums.length,
+      reviewGroupCount: reviews.length
+    });
+
+    document.querySelectorAll(".nav button").forEach(button => {
+      button.addEventListener("click", () => showTab(button.dataset.tab));
+    });
+
+    document.getElementById("openPrivacy").addEventListener("click", () => showTab("privacy"));
+    document.getElementById("closeAlbumDetail").addEventListener("click", closeAlbumDetail);
+    document.getElementById("albumDetail").addEventListener("click", (event) => {
+      if (event.target.id === "albumDetail") closeAlbumDetail();
+    });
+    document.getElementById("approveAlbumFromDetail").addEventListener("click", () => {
+      if (activeAlbum?.id) {
+        sendNative("approveAlbum", { id: activeAlbum.id });
+        closeAlbumDetail();
+      }
+    });
+    document.getElementById("closeDetail").addEventListener("click", closeReviewDetail);
+    document.getElementById("reviewDetail").addEventListener("click", (event) => {
+      if (event.target.id === "reviewDetail") closeReviewDetail();
+    });
+    document.getElementById("closeViewer").addEventListener("click", closePhotoViewer);
+    document.getElementById("photoViewer").addEventListener("click", (event) => {
+      if (event.target.id === "photoViewer") closePhotoViewer();
+    });
+    document.getElementById("clearSelection").addEventListener("click", () => {
+      selectedPhotoIds = new Set();
+      renderDetailGrid();
+    });
+    document.getElementById("deleteSelected").addEventListener("click", () => {
+      const ids = Array.from(selectedPhotoIds);
+      if (!ids.length) {
+        showToast("삭제할 사진을 선택해주세요.");
+        return;
+      }
+      sendNative("deleteAssets", { ids });
+      closeReviewDetail();
+    });
+    document.getElementById("simulateScan").addEventListener("click", () => {
+      showToast("로컬 분석 결과를 다시 계산합니다.");
+      sendNative("refresh");
+    });
+    document.getElementById("newAlbumRecommendations").addEventListener("click", () => {
+      showToast("다른 관점으로 앨범 후보를 다시 찾고 있습니다.");
+      sendNative("newAlbumRecommendations");
+    });
+    document.getElementById("requestAccess").addEventListener("click", () => sendNative("requestAccess"));
+    document.getElementById("approveAll").addEventListener("click", () => showToast("승인된 앨범 추가와 선택 삭제만 반영합니다."));
+
+    window.photoAppNativeUpdate = function(payload) {
+      setRuntimeStatus("Mac 앱 연결됨", `사진 권한 상태: ${payload.authorization || "확인 중"} · ${payload.notice || "로컬 분석 준비 완료"}`);
+      albums = payload.albums || [];
+      reviews = payload.reviews || [];
+
+      fill("dashboardAlbums", albums, renderAlbum, 3);
+      fill("allAlbums", albums, renderAlbum);
+      fill("dashboardReviews", reviews, renderReview, 2);
+      fill("allReviews", reviews, renderReview);
+      updateSummary(payload.summary || {});
+
+      if (payload.notice) showToast(payload.notice);
+    };
+
+    window.photoAppToast = showToast;
+
+    window.addEventListener("load", () => {
+      if (window.webkit?.messageHandlers?.photoApp) {
+        setRuntimeStatus("Mac 앱 연결 중", "사진 접근 권한을 요청하고 있습니다.");
+      }
+      sendNative("requestAccess");
+    });
+  </script>
+</body>
+</html>
+
+// swift-tools-version: 6.0
+
+import PackageDescription
+
+let package = Package(
+    name: "PhotoOrganizerMac",
+    platforms: [
+        .macOS(.v14)
+    ],
+    products: [
+        .executable(name: "PhotoOrganizerMac", targets: ["PhotoOrganizerMac"])
+    ],
+    targets: [
+        .executableTarget(
+            name: "PhotoOrganizerMac",
+            path: "Sources/PhotoOrganizerMac",
+            resources: [
+                .copy("Resources/index.html")
+            ]
+        )
+    ]
+)
+
+# 개인정보 보호 안내
+
+사진 정리 도우미는 사진처럼 민감한 개인 데이터를 다루기 때문에 로컬 우선 원칙으로 설계되었습니다.
+
+## 앱이 처리하는 데이터
+
+- Apple Photos 보관함의 사진/동영상 메타데이터
+- 분석용 저해상도 이미지
+- 썸네일 미리보기
+- 위치, 날짜, 스크린샷 여부, 즐겨찾기 여부
+
+## 앱이 하지 않는 일
+
+- 원본 사진을 서버로 업로드하지 않습니다.
+- 썸네일이나 위치 정보를 외부 서버로 전송하지 않습니다.
+- 얼굴을 인식하거나 사람 이름으로 묶지 않습니다.
+- 사용자의 승인 없이 앨범을 만들거나 사진을 삭제하지 않습니다.
+- 즐겨찾기 사진을 삭제 후보로 제안하지 않습니다.
+
+## 삭제 방식
+
+삭제는 자동으로 실행되지 않습니다. 사용자가 삭제 후보를 직접 선택하고, 앱 내부 확인창과 macOS Photos 확인창을 거친 뒤에만 사진 앱의 최근 삭제 항목으로 이동합니다.
+
+## 권한 해제
+
+macOS `시스템 설정 > 개인정보 보호 및 보안 > 사진`에서 PhotoOrganizerMac의 사진 접근 권한을 해제할 수 있습니다.
+
+# 사진 정리 도우미
+
+Mac Photos 보관함을 로컬에서 분석해 추천 앨범과 삭제 검토 묶음을 제안하는 macOS 프로토타입입니다.
+
+## 핵심 기능
+
+- 추천 앨범: 이미지 분류, OCR, 위치/날짜 정보를 조합해 맥락 기반 앨범 후보를 제안합니다.
+- 삭제 검토: 같은 장소와 시간대 반복 촬영, 연사, 비슷한 스크린샷 묶음을 보여주고 사용자가 직접 삭제할 사진을 고릅니다.
+- 개인정보 보호: 원본 사진, 썸네일, 위치 정보는 서버로 전송하지 않고 Mac 안에서만 처리합니다.
+
+## 요구 사항
+
+- macOS 14 이상
+- Xcode 15 이상 권장
+- Apple Photos 접근 권한
+
+## 실행 방법
+
+1. 이 저장소를 내려받습니다.
+2. `PhotoOrganizerMacApp.xcodeproj`를 Xcode로 엽니다.
+3. 상단 실행 대상이 `My Mac`인지 확인합니다.
+4. 실행 버튼을 눌러 앱을 시작합니다.
+5. 사진 접근 권한을 허용하면 로컬 분석이 시작됩니다.
+
+## 릴리즈 빌드
+
+사용자가 파일 하나만 내려받아 설치하게 하려면 DMG 배포를 권장합니다.
+
+```bash
+./scripts/create_dmg.sh
+```
+
+결과물은 `dist/PhotoOrganizerMac-<version>.dmg`에 생성됩니다.
+
+개발용 ZIP 패키지를 만들려면:
+
+```bash
+./scripts/build_release_zip.sh
+```
+
+결과물은 `dist/PhotoOrganizerMac-<version>.zip`에 생성됩니다.
+
+Apple Developer ID가 없는 빌드는 처음 실행 시 macOS 보안 경고가 뜰 수 있습니다. 일반 사용자에게 배포하려면 Developer ID 서명과 notarization을 거친 DMG 배포를 권장합니다.
+
+## 사용자를 위한 설치 방법
+
+1. GitHub Releases에서 `PhotoOrganizerMac-0.1.0.dmg`를 다운로드합니다.
+2. DMG 파일을 엽니다.
+3. `PhotoOrganizerMac.app`을 `Applications` 폴더로 드래그합니다.
+4. `Applications` 폴더에서 앱을 실행합니다.
+5. macOS가 사진 접근 권한을 요청하면 허용합니다.
+6. 추천 앨범과 삭제 검토 기능을 사용합니다.
+
+## 개인정보 원칙
+
+- 서버 전송 없음
+- 자동 삭제 없음
+- 얼굴/인물 식별 없음
+- 숨김/최근 삭제/공유 앨범 제외
+- 즐겨찾기 사진 삭제 후보 제외
+
+자세한 내용은 [PRIVACY.md](PRIVACY.md)와 [docs/privacy-first-architecture.md](docs/privacy-first-architecture.md)를 참고하세요.
+
+## 발표/연구 자료
+
+대학생 페르소나와 문제 근거는 [docs/research/student-persona-and-problem.md](docs/research/student-persona-and-problem.md)에 정리되어 있습니다.
