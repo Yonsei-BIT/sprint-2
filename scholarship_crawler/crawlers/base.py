@@ -170,7 +170,7 @@ class BaseCrawler(ABC):
             import os
             try:
                 from dotenv import load_dotenv
-                load_dotenv()
+                load_dotenv(override=True)
             except ImportError:
                 pass
             api_key = os.environ.get("ANTHROPIC_API_KEY", "")
@@ -204,7 +204,7 @@ class BaseCrawler(ABC):
             import os, base64, json
             try:
                 from dotenv import load_dotenv
-                load_dotenv()
+                load_dotenv(override=True)
             except ImportError:
                 pass
             api_key = os.environ.get("ANTHROPIC_API_KEY", "")
@@ -262,6 +262,22 @@ class BaseCrawler(ABC):
             return {}
 
         return await asyncio.to_thread(_sync)
+
+    @staticmethod
+    def extract_inline_image_urls(soup, base_url: str = "", container_selector: str = ".board-view") -> list[str]:
+        """게시판 본문 인라인 img 태그에서 이미지 URL 추출."""
+        container = soup.select_one(container_selector) or soup
+        urls: list[str] = []
+        seen: set[str] = set()
+        for img in container.find_all("img", src=True):
+            src = img["src"]
+            if not src or src.startswith("data:"):
+                continue
+            full = src if src.startswith("http") else urljoin(base_url, src)
+            if full not in seen:
+                seen.add(full)
+                urls.append(full)
+        return urls
 
     @staticmethod
     def extract_attachment_urls(soup, base_url: str = "") -> list[str]:

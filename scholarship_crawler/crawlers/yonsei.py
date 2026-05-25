@@ -149,6 +149,29 @@ class YonseiCrawler(BaseCrawler):
         no_duplicate = self.parse_no_duplicate(full_content)
 
         apply_url = self.extract_apply_url(full_content)
+
+        # 이미지 포스터에서 정보 보완 (날짜·금액 파싱 실패 시 또는 이미지만 있는 경우)
+        image_urls = self.extract_inline_image_urls(soup, "https://www.yonsei.ac.kr")
+        if image_urls:
+            img_data = await self.ai_extract_from_images(image_urls, title)
+            if img_data:
+                if not apply_start and img_data.get("apply_start") not in (None, "null"):
+                    try:
+                        apply_start = date.fromisoformat(img_data["apply_start"])
+                    except (ValueError, TypeError):
+                        pass
+                if not apply_end and img_data.get("apply_end") not in (None, "null"):
+                    try:
+                        apply_end = date.fromisoformat(img_data["apply_end"])
+                        is_active = apply_end >= TODAY
+                    except (ValueError, TypeError):
+                        pass
+                if not amount_text and img_data.get("amount_text") not in (None, "null"):
+                    amount_text = img_data["amount_text"]
+                # 이미지 자격 정보를 eligibility_text에 추가
+                if img_data.get("eligibility") not in (None, "null"):
+                    full_content = full_content + "\n[이미지 추출] " + img_data["eligibility"]
+
         ai_summary = await self.ai_summarize(title, full_content)
 
         uid = hashlib.md5(url.encode()).hexdigest()[:12]

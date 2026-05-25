@@ -27,7 +27,15 @@ app.add_middleware(
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "https://scholarship-crawler.vercel.app"],
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Cache-Control"],
 )
+
+@app.middleware("http")
+async def no_cache_middleware(request, call_next):
+    response = await call_next(request)
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    return response
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "scholarships.db")
 db = ScholarshipDB(DB_PATH)
@@ -137,7 +145,6 @@ class AiMatchRequest(BaseModel):
 
 
 @app.post("/api/scholarships/ai-match")
-@limiter.limit("2/day")
 def ai_match(request: Request, req: AiMatchRequest):
     user_tags = [t.strip() for t in req.tags.split(",")] if req.tags else None
     user_regions = [r for r in [req.residence, req.hometown] if r] or None

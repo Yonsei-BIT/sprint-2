@@ -38,7 +38,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetch(`${API}/api/stats`)
+    fetch(`${API}/api/stats`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => setDbTotal(d.total))
       .catch(() => {});
@@ -56,7 +56,7 @@ export default function Home() {
       if (profile.hometown)      params.set("hometown", profile.hometown);
       if (profile.residenceRegion) params.set("residence_region", profile.residenceRegion);
 
-      const res = await fetch(`${API}/api/scholarships?${params}`);
+      const res = await fetch(`${API}/api/scholarships?${params}`, { cache: "no-store" });
       const data = await res.json();
       setResults(data.results);
       setTotal(data.total);
@@ -99,8 +99,8 @@ export default function Home() {
       const data = await res.json();
       setAiResults(data.results ?? []);
       setTotal(data.total ?? 0);
-    } catch {
-      alert("백엔드 서버에 연결할 수 없어요.");
+    } catch (e: unknown) {
+      alert("AI 매칭 오류: " + (e instanceof Error ? e.message : String(e)));
     } finally {
       setAiLoading(false);
     }
