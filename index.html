@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Handwriting Formula Lab</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace" aria-label="손글씨 폰트 생성 워크스페이스">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">English + Math</p>
+            <h1>Handwriting Formula Lab</h1>
+          </div>
+          <div class="status-strip" aria-live="polite">
+            <span id="sampleCount">샘플 0개</span>
+            <span id="fontState">폰트 대기 중</span>
+          </div>
+        </header>
+
+        <section class="step-grid">
+          <article class="panel capture-panel">
+            <div class="panel-head">
+              <div>
+                <p class="step-label">1. 글씨 샘플 입력</p>
+                <h2 id="promptText">a</h2>
+              </div>
+              <div class="prompt-actions">
+                <button class="icon-button" id="prevPrompt" type="button" title="이전 샘플" aria-label="이전 샘플">
+                  <span aria-hidden="true">‹</span>
+                </button>
+                <button class="icon-button" id="nextPrompt" type="button" title="다음 샘플" aria-label="다음 샘플">
+                  <span aria-hidden="true">›</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="guide-line">
+              <span>소문자는 평소 x-height로, 대문자/숫자는 조금 더 크게, 기호는 실제 수식에서 쓰는 크기로 쓰세요.</span>
+              <strong id="promptIndex">1 / 96</strong>
+            </div>
+
+            <div class="canvas-wrap">
+              <canvas id="drawCanvas" width="900" height="460" aria-label="손글씨 샘플 입력 캔버스"></canvas>
+              <div class="target-box" aria-hidden="true"></div>
+              <div class="baseline top"></div>
+              <div class="baseline mid"></div>
+              <div class="baseline bottom"></div>
+              <div class="baseline vertical"></div>
+            </div>
+
+            <div class="toolbar">
+              <button id="clearCanvas" type="button">현재 샘플 수정</button>
+              <button id="saveSample" class="primary" type="button">샘플 저장/덮어쓰기</button>
+              <button id="exportSamples" type="button">JSON 내보내기</button>
+              <button id="generateFont" class="strong" type="button">개인 폰트 생성</button>
+            </div>
+          </article>
+
+          <article class="panel controls-panel">
+            <div class="panel-head">
+              <div>
+                <p class="step-label">2. 글꼴 프로필</p>
+                <h2>생성 상태</h2>
+              </div>
+            </div>
+
+            <div class="metrics">
+              <div>
+                <span>획 밀도</span>
+                <strong id="densityMetric">0%</strong>
+              </div>
+              <div>
+                <span>기준선 안정도</span>
+                <strong id="baselineMetric">0%</strong>
+              </div>
+              <div>
+                <span>글리프 커버리지</span>
+                <strong id="coverageMetric">0%</strong>
+              </div>
+            </div>
+
+            <label class="control">
+              <span>변형도</span>
+              <input id="variationRange" type="range" min="0" max="100" value="8" />
+            </label>
+            <label class="control">
+              <span>기울기</span>
+              <input id="slantRange" type="range" min="-18" max="18" value="0" />
+            </label>
+            <label class="control">
+              <span>글자 간격</span>
+              <input id="spacingRange" type="range" min="-4" max="12" value="1" />
+            </label>
+            <label class="control">
+              <span>줄 간격</span>
+              <input id="lineRange" type="range" min="52" max="96" value="58" />
+            </label>
+
+            <div class="note">
+              샘플은 브라우저에 저장됩니다. 다음에 접속하면 다시 입력하지 않고 바로 텍스트/파일을 변환할 수 있고, 각 글자는 다시 열어 수정 후 덮어쓸 수 있습니다.
+            </div>
+          </article>
+        </section>
+
+        <section class="output-grid">
+          <article class="panel text-panel">
+            <div class="panel-head">
+              <div>
+                <p class="step-label">3. 파일 또는 텍스트 입력</p>
+                <h2>손글씨로 변환할 내용</h2>
+              </div>
+            </div>
+            <label class="file-drop">
+              <span>TXT/PDF 파일 선택</span>
+              <input id="sourceFile" type="file" accept=".txt,.pdf,text/plain,application/pdf" />
+            </label>
+            <textarea id="sentenceInput" spellcheck="false">Let f(x) = x^2 + 3x - 5.
+If ∫ f(x) dx = x^3/3 + 3x^2/2 - 5x + C, then solve f'(x) = 2x + 3.</textarea>
+            <div class="toolbar">
+              <button id="renderPreview" class="primary" type="button">미리보기 생성</button>
+              <button id="downloadPdf" class="strong" type="button">PDF 생성</button>
+            </div>
+          </article>
+
+          <article class="panel preview-panel">
+            <div class="panel-head">
+              <div>
+                <p class="step-label">4. 결과 확인</p>
+                <h2>손글씨 PDF 미리보기</h2>
+              </div>
+            </div>
+            <canvas id="previewCanvas" width="900" height="1160" aria-label="PDF 미리보기 캔버스"></canvas>
+          </article>
+        </section>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
