@@ -1,0 +1,2282 @@
+﻿<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Posture Reminder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pangolin&family=Winky+Rough:ital,wght@1,700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        color: #eef4ff;
+        background: #070817;
+        font-family: 'Jua', sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 18% 12%, rgba(99, 102, 241, 0.36), transparent 34%),
+          radial-gradient(circle at 82% 2%, rgba(168, 85, 247, 0.28), transparent 30%),
+          linear-gradient(135deg, #070817 0%, #111827 46%, #172554 100%);
+      }
+
+      body, button, input, p, span, strong, li, h1, h2, h3 {
+        word-break: keep-all;
+        overflow-wrap: normal;
+      }
+
+      button, input { font: inherit; }
+
+      .app-shell {
+        width: min(1440px, 100%);
+        margin: 0 auto;
+        padding: 32px;
+      }
+
+      .hidden { display: none !important; }
+
+      .panel {
+        border: 1px solid rgba(165, 180, 252, 0.22);
+        border-radius: 8px;
+        background: rgba(15, 23, 42, 0.76);
+        box-shadow: 0 24px 80px rgba(2, 6, 23, 0.34);
+        backdrop-filter: blur(22px);
+      }
+
+      .eyebrow {
+        margin: 0;
+        color: #a5b4fc;
+        font-size: 0.75rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .wizard-view {
+        min-height: calc(100vh - 64px);
+        display: grid;
+        place-items: center;
+      }
+
+      .wizard-card {
+        width: min(820px, 100%);
+        padding: clamp(28px, 6vw, 56px);
+        text-align: center;
+      }
+
+      .wizard-card h1,
+      .wizard-card h2 {
+        margin: 10px 0 14px;
+        color: #f8fbff;
+      }
+
+      .wizard-card h1 { font-size: clamp(3rem, 10vw, 6rem); }
+      .wizard-card h2 { font-size: clamp(2rem, 6vw, 4rem); }
+
+      .wizard-card p {
+        margin: 0 auto 24px;
+        max-width: 620px;
+        color: #b9c5d8;
+        line-height: 1.65;
+      }
+
+      .primary-action {
+        min-height: 50px;
+        padding: 0 22px;
+        border: 0;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+        color: #fff;
+        cursor: pointer;
+        font-weight: 950;
+        box-shadow: 0 14px 34px rgba(59, 130, 246, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      }
+
+      .primary-action:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 18px 42px rgba(139, 92, 246, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+      }
+
+      .time-picker {
+        display: grid;
+        gap: 14px;
+        justify-items: center;
+        margin: 26px 0;
+      }
+
+      .time-segments {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr auto 1fr;
+        align-items: center;
+        gap: 10px;
+        width: min(520px, 100%);
+      }
+
+      .time-segments input {
+        min-width: 0;
+        padding: 14px 16px;
+        border: 1px solid rgba(165, 180, 252, 0.34);
+        border-radius: 8px;
+        background: rgba(2, 6, 23, 0.36);
+        color: #f8fbff;
+        text-align: center;
+        font-size: clamp(1.5rem, 6vw, 2.7rem);
+        font-weight: 950;
+      }
+
+      .time-separator {
+        color: #a5b4fc;
+        font-size: 2rem;
+        font-weight: 950;
+      }
+
+      .time-labels {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        width: min(520px, 100%);
+        color: #94a3b8;
+        font-size: 0.86rem;
+        font-weight: 850;
+      }
+
+      .time-display {
+        color: #bfdbfe;
+        font-size: clamp(2.6rem, 10vw, 5.2rem);
+        font-weight: 950;
+        line-height: 1;
+      }
+
+      .scan-reference {
+        width: min(760px, 100%);
+        margin: 18px auto;
+        overflow: hidden;
+        border: 1px solid rgba(165, 180, 252, 0.18);
+        border-radius: 8px;
+        background: rgba(2, 6, 23, 0.24);
+      }
+
+      .scan-reference img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 2.35 / 1;
+        object-fit: cover;
+      }
+
+      .scan-steps,
+      .posture-chart {
+        display: grid;
+        gap: 12px;
+        margin: 18px 0;
+        text-align: left;
+      }
+
+      .scan-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .posture-chart { grid-template-columns: 1fr 1fr; }
+
+      .scan-steps div,
+      .posture-chart-column {
+        border: 1px solid rgba(165, 180, 252, 0.18);
+        border-radius: 8px;
+        background: rgba(2, 6, 23, 0.26);
+      }
+
+      .scan-steps div { padding: 16px; }
+
+      .scan-steps strong {
+        display: block;
+        margin-bottom: 7px;
+        color: #bfdbfe;
+      }
+
+      .scan-steps span { font-size: 0.9rem; color: #cbd5e1; line-height: 1.42; }
+
+      .posture-chart-column { overflow: hidden; }
+
+      .posture-chart-column h3 {
+        margin: 0;
+        padding: 10px 13px;
+        background: rgba(59, 130, 246, 0.16);
+        color: #f8fbff;
+        font-size: 0.94rem;
+      }
+
+      .posture-chart-column.bad h3 { background: rgba(251, 113, 133, 0.16); }
+
+      .posture-chart-column ul {
+        margin: 0;
+        padding: 10px 14px 12px 28px;
+        color: #dbeafe;
+        font-size: 0.82rem;
+        line-height: 1.42;
+        word-break: keep-all;
+      }
+
+      .evidence-card {
+        margin: 18px 0;
+        padding: 18px;
+        border: 1px solid rgba(56, 189, 248, 0.22);
+        border-radius: 8px;
+        background: rgba(8, 47, 73, 0.28);
+        color: #dbeafe;
+        text-align: left;
+      }
+
+      .evidence-card strong {
+        display: block;
+        margin-bottom: 10px;
+        color: #f8fbff;
+      }
+
+      .evidence-card ul {
+        margin: 0;
+        padding-left: 20px;
+        line-height: 1.6;
+        word-break: keep-all;
+      }
+
+      .compact-note {
+        margin: 10px 0 18px;
+        color: #cbd5e1;
+        font-size: 0.9rem;
+        line-height: 1.45;
+        word-break: keep-all;
+      }
+
+      .sound-toggle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 18px 22px 0;
+        padding: 14px 0 2px;
+        border-top: 1px solid rgba(165, 180, 252, 0.14);
+        color: #dbeafe;
+        font-weight: 850;
+      }
+
+      .sound-toggle input {
+        width: 18px;
+        height: 18px;
+        accent-color: #93c5fd;
+      }
+
+      .evidence-links {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+
+      .evidence-links a {
+        color: #93c5fd;
+        font-weight: 850;
+        text-decoration: none;
+      }
+
+      .permission-status {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 38px;
+        margin: 4px 0 18px;
+        padding: 0 14px;
+        border: 1px solid rgba(165, 180, 252, 0.22);
+        border-radius: 999px;
+        background: rgba(2, 6, 23, 0.28);
+        color: #dbeafe;
+        font-weight: 850;
+      }
+
+      .hero-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 24px;
+      }
+
+      .hero-header h1 {
+        margin: 2px 0 10px;
+        color: #f8fbff;
+        font-size: clamp(2.2rem, 5vw, 4.7rem);
+        line-height: 0.95;
+      }
+
+      .hero-header p,
+      .privacy-note,
+      .disclaimer {
+        color: #b9c5d8;
+      }
+
+      .privacy-note {
+        width: min(360px, 100%);
+        padding: 16px 18px;
+        border: 1px solid rgba(165, 180, 252, 0.2);
+        border-radius: 8px;
+        background: rgba(15, 23, 42, 0.72);
+      }
+
+      .focus-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      .focus-timer {
+        padding: 12px 16px;
+        border: 1px solid rgba(165, 180, 252, 0.18);
+        border-radius: 8px;
+        background: rgba(15, 23, 42, 0.72);
+        color: #bfdbfe;
+        font-size: 1.5rem;
+        font-weight: 950;
+      }
+
+      .dashboard-grid,
+      .lower-grid {
+        display: grid;
+        gap: 18px;
+      }
+
+      .dashboard-grid { grid-template-columns: minmax(0, 1.55fr) minmax(340px, 0.8fr); }
+      .lower-grid { grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.9fr); margin-top: 18px; }
+
+      .panel-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 20px 22px;
+        border-bottom: 1px solid rgba(165, 180, 252, 0.16);
+      }
+
+      .panel-heading h2 { margin: 3px 0 0; font-size: 1.1rem; }
+
+      .video-shell {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+        background: #172033;
+      }
+
+      video,
+      canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      video {
+        object-fit: contain;
+        transform: scaleX(-1);
+      }
+
+      canvas {
+        transform: scaleX(-1);
+        pointer-events: none;
+      }
+
+      .camera-empty,
+      .countdown {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-content: center;
+        gap: 10px;
+        padding: 28px;
+        color: #d7e2ee;
+        text-align: center;
+      }
+
+      .camera-badge,
+      .camera-error {
+        position: absolute;
+        left: 18px;
+        bottom: 18px;
+        max-width: calc(100% - 36px);
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: rgba(15, 23, 42, 0.92);
+        color: #dbeafe;
+        font-weight: 850;
+      }
+
+      .camera-error { color: #fecdd3; }
+
+      .countdown {
+        background: rgba(18, 27, 43, 0.46);
+        color: #fff;
+        font-size: clamp(5rem, 20vw, 11rem);
+        font-weight: 950;
+      }
+
+      .scan-ring {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: min(56%, 420px);
+        aspect-ratio: 1;
+        border: 2px solid rgba(191, 219, 254, 0.38);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+      }
+
+      .scan-ring::before {
+        content: "";
+        position: absolute;
+        inset: -5px;
+        border-radius: 50%;
+        border: 5px solid transparent;
+        border-top-color: #60a5fa;
+        border-right-color: #a78bfa;
+        animation: scanSpin 1.1s linear infinite;
+      }
+
+      .scan-ring::after {
+        content: "눈 · 코 · 어깨 포인트 확인 중";
+        position: absolute;
+        left: 50%;
+        bottom: -44px;
+        transform: translateX(-50%);
+        width: max-content;
+        padding: 9px 12px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.82);
+        color: #dbeafe;
+        font-weight: 850;
+      }
+
+      @keyframes scanSpin { to { transform: rotate(360deg); } }
+
+      .scan-title-overlay {
+        width: 100%;
+        margin-bottom: 24px;
+        padding: clamp(14px, 2.4vw, 24px) clamp(14px, 4vw, 34px);
+        border: 1px solid rgba(191, 219, 254, 0.34);
+        border-radius: 8px;
+        background: rgba(2, 6, 23, 0.72);
+        color: #f8fbff;
+        text-align: center;
+        font-size: clamp(1.45rem, 3.8vw, 3.2rem);
+        line-height: 1.05;
+        font-weight: 950;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+
+      .precheck-panel {
+        margin-top: 16px;
+        padding: 16px 18px;
+        border: 1px solid rgba(165, 180, 252, 0.18);
+        border-radius: 8px;
+        background: rgba(15, 23, 42, 0.72);
+        color: #dbeafe;
+      }
+
+      .precheck-panel strong {
+        display: block;
+        margin-bottom: 10px;
+        color: #f8fbff;
+        font-size: 1.02rem;
+      }
+
+      .precheck-panel ul {
+        margin: 0;
+        padding-left: 20px;
+        line-height: 1.55;
+        word-break: keep-all;
+      }
+
+      .precheck-panel.is-ready {
+        border-color: rgba(45, 212, 191, 0.52);
+        background: rgba(13, 78, 70, 0.38);
+      }
+
+      .precheck-panel.is-waiting {
+        border-color: rgba(250, 204, 21, 0.42);
+        background: rgba(63, 45, 12, 0.34);
+      }
+
+      .status-pill {
+        padding: 8px 11px;
+        border-radius: 999px;
+        background: rgba(148, 163, 184, 0.16);
+        color: #c7d2fe;
+        font-weight: 850;
+      }
+
+      .status-pill.is-on { background: rgba(45, 212, 191, 0.16); color: #99f6e4; }
+
+      .status-panel {
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .status-top { display: flex; align-items: center; gap: 14px; }
+
+      .status-icon {
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        background: rgba(99, 102, 241, 0.24);
+        color: #c7d2fe;
+        font-weight: 950;
+      }
+
+      .status-good { border-color: rgba(45, 212, 191, 0.5); background: rgba(15, 118, 110, 0.18); }
+      .status-bad { border-color: rgba(251, 146, 60, 0.58); background: rgba(124, 45, 18, 0.22); }
+      .status-caution { border-color: rgba(250, 204, 21, 0.68); background: rgba(113, 63, 18, 0.24); }
+
+      .score-block {
+        display: grid;
+        place-items: center;
+        min-height: 180px;
+        border-radius: 8px;
+        background: rgba(2, 6, 23, 0.36);
+        border: 1px solid rgba(165, 180, 252, 0.16);
+      }
+
+      .score-block span {
+        color: #93c5fd;
+        font-size: clamp(4.2rem, 10vw, 7rem);
+        line-height: 0.85;
+        font-weight: 950;
+      }
+
+      .score-block p { margin: 0; color: #b9c5d8; font-weight: 850; }
+      .status-caution .score-block { border-color: rgba(250, 204, 21, 0.5); background: rgba(250, 204, 21, 0.12); }
+      .status-caution .score-block span { color: #facc15; }
+
+      .status-message { margin: 0; min-height: 48px; color: #dbeafe; font-weight: 850; line-height: 1.5; }
+
+      .posture-reasons {
+        display: grid;
+        gap: 8px;
+        padding: 14px;
+        border: 1px solid rgba(165, 180, 252, 0.16);
+        border-radius: 8px;
+        background: rgba(2, 6, 23, 0.26);
+        color: #cbd5e1;
+        line-height: 1.45;
+      }
+
+      .posture-reasons strong { color: #f8fbff; }
+      .posture-reasons ul { margin: 0; padding-left: 18px; }
+
+      .metric-grid,
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .metric,
+      .summary-item {
+        display: grid;
+        gap: 7px;
+        padding: 16px;
+        border: 1px solid rgba(165, 180, 252, 0.16);
+        border-radius: 8px;
+        background: rgba(2, 6, 23, 0.3);
+      }
+
+      .metric span,
+      .summary-item span { color: #b9c5d8; font-size: 0.88rem; font-weight: 850; }
+      .metric strong,
+      .summary-item strong { color: #f8fbff; font-size: 1.25rem; }
+
+      .controls-panel { padding-bottom: 18px; }
+
+      .button-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 18px 22px 0;
+      }
+
+      .button-row button,
+      .icon-toggle {
+        min-height: 42px;
+        padding: 0 15px;
+        border: 1px solid rgba(165, 180, 252, 0.28);
+        border-radius: 8px;
+        background: rgba(15, 23, 42, 0.72);
+        color: #eef4ff;
+        cursor: pointer;
+        font-weight: 850;
+      }
+
+      .button-row button:hover:not(:disabled),
+      .icon-toggle:hover {
+        border-color: #93c5fd;
+        color: #bfdbfe;
+      }
+
+      .button-row button:disabled { cursor: not-allowed; opacity: 0.45; }
+
+      .summary-grid { padding: 18px 22px 22px; }
+      .disclaimer { margin-top: 18px; padding: 18px 20px; line-height: 1.5; }
+
+      .popup {
+        position: fixed;
+        inset: 0;
+        z-index: 30;
+        display: grid;
+        place-items: center;
+        padding: 22px;
+        background: rgba(2, 6, 23, 0.66);
+        backdrop-filter: blur(8px);
+      }
+
+      .popup-card {
+        width: min(480px, 100%);
+        padding: 26px;
+        border: 1px solid rgba(165, 180, 252, 0.22);
+        border-radius: 8px;
+        background: #101827;
+        box-shadow: 0 24px 80px rgba(15, 23, 42, 0.24);
+      }
+
+      .popup-card h2 { margin: 0 0 10px; color: #f8fbff; }
+      .popup-card p { margin: 0 0 20px; color: #cbd5e1; line-height: 1.6; }
+      .popup-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+      .toast {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        z-index: 20;
+        width: min(420px, calc(100vw - 48px));
+        padding: 16px 18px;
+        border: 1px solid rgba(251, 146, 60, 0.52);
+        border-radius: 8px;
+        background: rgba(30, 41, 59, 0.96);
+        color: #fed7aa;
+        font-weight: 850;
+      }
+
+      .floating-coach {
+        position: fixed;
+        right: 22px;
+        top: 22px;
+        z-index: 26;
+        display: grid;
+        grid-template-columns: 54px minmax(0, 1fr);
+        gap: 12px;
+        align-items: center;
+        width: min(360px, calc(100vw - 32px));
+        padding: 14px 16px;
+        border: 1px solid rgba(165, 180, 252, 0.28);
+        border-radius: 18px;
+        background: rgba(15, 23, 42, 0.84);
+        box-shadow: 0 18px 55px rgba(2, 6, 23, 0.34);
+        backdrop-filter: blur(16px);
+        color: #e5edff;
+        transform: translateY(0);
+        transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+        pointer-events: auto;
+      }
+
+      .coach-avatar {
+        position: relative;
+        width: 58px;
+        height: 58px;
+        border-radius: 0;
+        background: none;
+        filter: drop-shadow(0 10px 18px rgba(56, 189, 248, 0.18));
+      }
+
+      .coach-avatar::before {
+        content: "";
+        position: absolute;
+        inset: -5px;
+        background: center / contain no-repeat url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23f8fbff' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M30 38 C30 19 44 10 58 13 C75 17 83 30 81 47 C78 63 62 70 47 66 C36 63 30 52 30 38Z' stroke-width='3'/%3E%3Cpath d='M48 38 C48 32 52 29 56 30 C61 31 64 35 63 40 C62 45 58 47 54 46 C50 45 48 42 48 38Z' stroke-width='3'/%3E%3Cpath d='M47 55 C51 59 58 59 62 55' stroke-width='2.6'/%3E%3Cpath d='M50 67 C42 69 37 75 39 83 C42 88 48 86 51 90 C55 86 61 90 65 84 C67 76 62 69 55 67' stroke-width='3'/%3E%3Cpath d='M43 14 L39 4 M55 12 L56 2 M66 18 L73 8 M74 28 L84 22 M32 25 L23 18' stroke-width='3'/%3E%3C/g%3E%3Ccircle cx='39' cy='39' r='3' fill='%23f8fbff'/%3E%3Ccircle cx='72' cy='39' r='3' fill='%23f8fbff'/%3E%3C/svg%3E");
+      }
+
+      .coach-avatar::after {
+        content: none;
+      }
+
+      .coach-copy strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 0.86rem;
+        color: #f8fbff;
+      }
+
+      .coach-copy p {
+        margin: 0;
+        color: #cbd5e1;
+        font-size: 0.9rem;
+        line-height: 1.45;
+        word-break: keep-all;
+        overflow-wrap: break-word;
+      }
+
+      .coach-actions {
+        grid-column: 1 / -1;
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+
+      .coach-actions button {
+        min-height: 34px;
+        padding: 0 12px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.56);
+        color: #f8fbff;
+        cursor: pointer;
+        font-size: 0.82rem;
+        font-weight: 900;
+      }
+
+      .coach-actions .coach-primary {
+        border-color: rgba(191, 219, 254, 0.65);
+        background: linear-gradient(135deg, #60a5fa, #a78bfa);
+        color: #07111f;
+      }
+
+      .floating-coach.coach-good {
+        border-color: rgba(45, 212, 191, 0.48);
+        background: rgba(12, 48, 55, 0.86);
+      }
+
+      .floating-coach.coach-warning {
+        border-color: rgba(250, 204, 21, 0.72);
+        background: rgba(63, 45, 12, 0.9);
+        transform: translateY(4px);
+      }
+
+      .floating-coach.coach-warning .coach-avatar {
+        background:
+          radial-gradient(circle at 36% 38%, #ffffff 0 4px, transparent 5px),
+          radial-gradient(circle at 64% 38%, #ffffff 0 4px, transparent 5px),
+          linear-gradient(135deg, #facc15, #fb7185 64%, #c084fc);
+        animation: coachPulse 1.35s ease-in-out infinite;
+      }
+
+      .floating-coach.coach-bad {
+        border-color: rgba(251, 146, 60, 0.78);
+        background: rgba(67, 28, 12, 0.92);
+      }
+
+      @keyframes coachPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.07); }
+      }
+
+      .final-gallery {
+        position: relative;
+        width: min(620px, 100%);
+        aspect-ratio: 4 / 3;
+        margin: 22px auto;
+        overflow: hidden;
+        border-radius: 8px;
+        border: 1px solid rgba(165, 180, 252, 0.18);
+      }
+
+      .final-gallery img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      @media (max-width: 1080px) {
+        .dashboard-grid,
+        .lower-grid,
+        .scan-steps,
+        .posture-chart { grid-template-columns: 1fr; }
+        .hero-header { align-items: stretch; flex-direction: column; }
+      }
+
+      @media (max-width: 720px) {
+        .app-shell { padding: 18px; }
+        .metric-grid,
+        .summary-grid { grid-template-columns: 1fr; }
+        .button-row { display: grid; }
+        .scan-title-overlay { font-size: clamp(1.2rem, 5vw, 1.9rem); }
+        .floating-coach {
+          top: auto;
+          right: 16px;
+          bottom: 16px;
+          grid-template-columns: 46px minmax(0, 1fr);
+          padding: 12px 14px;
+        }
+        .coach-avatar { width: 46px; height: 46px; }
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" onerror="window.__postureLibraryError = true"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <section id="welcomeView" class="wizard-view">
+        <div class="panel wizard-card">
+          <p class="eyebrow">Posture Reminder</p>
+          <h1>안녕하세요</h1>
+          <p>집중하는 동안 웹캠으로 자세 변화를 지켜보고, 흐트러질 때 부드럽게 알려드릴게요.</p>
+          <button id="goTimeSetup" class="primary-action" type="button">시작하기</button>
+        </div>
+      </section>
+
+      <section id="notificationView" class="wizard-view hidden">
+        <div class="panel wizard-card">
+          <p class="eyebrow">Notification</p>
+          <h2>다른 창에서도 알려드릴까요?</h2>
+          <p>다른 탭이나 창을 보고 있어도 자세가 흐트러지면 브라우저 알림이나 작은 플로팅 코치 창으로 알려드릴 수 있어요.</p>
+          <div id="notificationStatus" class="permission-status">알림 권한 확인 전</div>
+          <div class="popup-actions" style="justify-content: center;">
+            <button id="allowNotification" class="icon-toggle" type="button">알림 허용하기</button>
+            <button id="openCoachWidget" class="icon-toggle" type="button">플로팅 위젯 띄우기</button>
+          </div>
+          <div class="popup-actions" style="justify-content: center; margin-top: 12px;">
+            <button id="skipNotification" class="primary-action" type="button">다음</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="timeView" class="wizard-view hidden">
+        <div class="panel wizard-card">
+          <p class="eyebrow">Focus Time</p>
+          <h2>집중 시간 설정</h2>
+          <p>집중할 시간을 입력하세요. 분이나 초에 60 이상을 넣으면 자동으로 상위 단위로 바뀝니다.</p>
+          <div class="time-picker">
+            <div class="time-segments" aria-label="집중 시간 입력">
+              <input id="focusHours" type="number" min="0" step="1" value="0" aria-label="집중 시간 시" />
+              <span class="time-separator">/</span>
+              <input id="focusMinutes" type="number" min="0" step="1" value="25" aria-label="집중 시간 분" />
+              <span class="time-separator">/</span>
+              <input id="focusSeconds" type="number" min="0" step="1" value="0" aria-label="집중 시간 초" />
+            </div>
+            <div class="time-labels"><span>시</span><span>분</span><span>초</span></div>
+            <div id="focusTimeDisplay" class="time-display">00:25:00</div>
+          </div>
+          <button id="goCalibration" class="primary-action" type="button">다음</button>
+        </div>
+      </section>
+
+      <section id="alertDelayView" class="wizard-view hidden">
+        <div class="panel wizard-card">
+          <p class="eyebrow">Correction Time</p>
+          <h2>자세 교정 시간 설정</h2>
+          <p>자세가 이 시간 이상 흐트러지면 알림을 띄워요. 다시 좋아진 뒤에는 5초 동안 70점 이상 유지되면 회복 처리됩니다.</p>
+          <div class="time-picker">
+            <div class="time-segments" aria-label="자세 교정 시간 입력">
+              <input id="alertHours" type="number" min="0" step="1" value="0" aria-label="자세 교정 기준 시" />
+              <span class="time-separator">/</span>
+              <input id="alertMinutes" type="number" min="0" step="1" value="0" aria-label="자세 교정 기준 분" />
+              <span class="time-separator">/</span>
+              <input id="alertSeconds" type="number" min="0" step="1" value="10" aria-label="자세 교정 기준 초" />
+            </div>
+            <div class="time-labels"><span>시</span><span>분</span><span>초</span></div>
+            <div id="alertDelayDisplay" class="time-display">00:00:10</div>
+          </div>
+          <button id="goScanSetup" class="primary-action" type="button">다음</button>
+        </div>
+      </section>
+
+      <section id="calibrationView" class="wizard-view hidden">
+        <div class="panel wizard-card">
+          <p class="eyebrow">Posture Scan</p>
+          <h2>자세 스캐닝을 시작하겠습니다!</h2>
+          <p class="compact-note">최대한 바른 자세로 카메라를 봐주세요.</p>
+          <div class="scan-reference">
+            <img src="assets/scan-guide.jpg" alt="좋은 자세와 나쁜 자세 비교 참고 이미지" />
+          </div>
+          <div class="scan-steps" aria-label="스캔 자세 3단계">
+            <div><strong>1. 허리 세우기</strong><span>등받이에 가볍게 기대기</span></div>
+            <div><strong>2. 어깨 내리기</strong><span>양쪽 어깨가 보이게 하기</span></div>
+            <div><strong>3. 화면 정면 보기</strong><span>고개를 어깨 위에 두기</span></div>
+          </div>
+          <div class="posture-chart" aria-label="Good Bad 자세 차트">
+            <div class="posture-chart-column">
+              <h3>Good example</h3>
+              <ul>
+                <li>머리와 목: 귀가 어깨 위에 가까움</li>
+                <li>어깨와 등: 어깨가 말리지 않고 허리가 세워짐</li>
+                <li>팔과 손목: 팔꿈치가 몸 가까이에 있고 손목이 편안함</li>
+                <li>화면 위치: 화면 상단이 눈높이와 비슷하거나 살짝 아래</li>
+              </ul>
+            </div>
+            <div class="posture-chart-column bad">
+              <h3>Bad example</h3>
+              <ul>
+                <li>머리와 목: 고개가 앞으로 빠지거나 아래로 숙여짐</li>
+                <li>어깨와 등: 어깨가 둥글게 말리고 상체가 구부러짐</li>
+                <li>팔과 손목: 팔이 멀리 뻗거나 손목이 과하게 꺾임</li>
+                <li>화면 위치: 화면이 너무 낮거나 몸이 화면에 너무 가까움</li>
+              </ul>
+            </div>
+          </div>
+          <div class="evidence-card">
+            <strong>이 앱이 스캔 전에 확인하는 좋은 자세 근거</strong>
+            <ul>
+              <li>화면 정면, 어깨 수평, 적당한 거리만 먼저 확인합니다.</li>
+              <li>진단이 아니라 기준 자세가 흔들리지 않게 하는 스캔 품질 체크입니다.</li>
+            </ul>
+            <div class="evidence-links" aria-label="좋은 자세 참고 근거">
+              <a href="https://www.osha.gov/etools/computer-workstations/positions" target="_blank" rel="noreferrer">OSHA 작업 자세</a>
+              <a href="https://www.osha.gov/etools/computer-workstations/components/monitors" target="_blank" rel="noreferrer">OSHA 모니터 위치</a>
+              <a href="https://www.mayoclinic.org/healthy-lifestyle/adult-health/in-depth/office-ergonomics/art-20046169?p=1" target="_blank" rel="noreferrer">Mayo Clinic 작업환경</a>
+            </div>
+          </div>
+          <button id="beginCalibrationFlow" class="primary-action" type="button">카메라 켜고 5초 스캔</button>
+        </div>
+      </section>
+
+      <section id="cameraScanView" class="focus-view hidden">
+        <div class="scan-title-overlay">유저의 자세를 스캔 중입니다.</div>
+        <section class="panel camera-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Scanning</p>
+              <h2>자세 스캔</h2>
+            </div>
+            <span id="scanCameraPill" class="status-pill">스캔 준비</span>
+          </div>
+          <div class="video-shell" id="scanVideoShell"></div>
+          <div id="precheckPanel" class="precheck-panel is-waiting">
+            <strong id="precheckTitle">스캔 전 자세 확인 중</strong>
+            <ul id="precheckMessages">
+              <li>얼굴과 양쪽 어깨가 보이게 앉아주세요.</li>
+            </ul>
+          </div>
+        </section>
+      </section>
+
+      <section id="scanCompleteView" class="wizard-view hidden">
+        <div class="panel wizard-card">
+          <p class="eyebrow">Scan Complete</p>
+          <h2>스캔이 완료되었어요!</h2>
+          <p>방금 5초 동안 저장한 자세를 기준으로 볼게요. 정답 자세를 진단하는 것이 아니라, 지금 기준에서 얼마나 벗어나는지만 확인합니다.</p>
+          <button id="startFocusAfterScan" class="primary-action" type="button">집중하기</button>
+        </div>
+      </section>
+
+      <section id="focusView" class="focus-view hidden">
+        <header class="hero-header">
+          <div>
+            <p class="eyebrow">Focus Companion</p>
+            <h1>이제 집중하세요!</h1>
+            <p>웹캠으로 공부 중 자세 변화를 감지하고, 자세가 무너지면 알려드려요.</p>
+          </div>
+          <div class="privacy-note">
+            <strong>개인정보 보호</strong>
+            <span>영상과 포즈 데이터는 현재 브라우저에서만 처리됩니다.</span>
+          </div>
+        </header>
+
+        <div class="focus-topline">
+          <p class="eyebrow">Remaining Focus Time</p>
+          <div id="remainingTime" class="focus-timer">00:25:00</div>
+        </div>
+
+        <section class="dashboard-grid">
+          <section class="panel camera-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Live Camera</p>
+                <h2>카메라 화면</h2>
+              </div>
+              <span id="cameraPill" class="status-pill">카메라 꺼짐</span>
+            </div>
+            <div class="video-shell" id="focusVideoShell">
+              <video id="video" playsinline muted></video>
+              <canvas id="overlay"></canvas>
+              <div id="cameraEmpty" class="camera-empty">
+                <strong>카메라를 허용해주세요</strong>
+                <span>영상은 브라우저 안에서만 처리됩니다.</span>
+              </div>
+              <div id="cameraBadge" class="camera-badge hidden">포즈 모델을 불러오는 중...</div>
+              <div id="cameraError" class="camera-error hidden"></div>
+              <div id="scanRing" class="scan-ring hidden"></div>
+              <div id="countdown" class="countdown hidden">5</div>
+            </div>
+          </section>
+
+          <section id="statusPanel" class="panel status-panel">
+            <div class="status-top">
+              <div id="statusIcon" class="status-icon">OK</div>
+              <div>
+                <p class="eyebrow">Current Status</p>
+                <h2 id="statusLabel">대기 중</h2>
+              </div>
+            </div>
+            <div class="score-block">
+              <span id="score">0</span>
+              <p>자세 안정도</p>
+            </div>
+            <p id="statusMessage" class="status-message">바른 자세를 기준으로 저장해볼까요?</p>
+            <div class="posture-reasons">
+              <strong>문제 기준: 70점 미만</strong>
+              <div id="liveReasonText">아직 감지된 자세 문제가 없어요.</div>
+            </div>
+            <div class="metric-grid">
+              <div class="metric"><span>세션 시간</span><strong id="sessionTime">00:00</strong></div>
+              <div class="metric"><span>무너짐 횟수</span><strong id="badCount">0</strong></div>
+            </div>
+          </section>
+        </section>
+
+        <section class="lower-grid">
+          <section class="panel controls-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Controls</p>
+                <h2>작업 흐름</h2>
+              </div>
+            </div>
+            <div class="button-row">
+              <button id="recalibrate" type="button" disabled>자세 다시 스캔하기</button>
+              <button id="editFocusTime" type="button">집중 시간 다시 설정하기</button>
+              <button id="editAlertTime" type="button">자세 교정 시간 다시 설정하기</button>
+              <button id="openCoachWidgetFromControls" type="button">플로팅 위젯 다시 띄우기</button>
+              <button id="finishFromControls" type="button">집중 끝내기</button>
+              <button id="restartFromControls" type="button">처음부터 다시 시작하기</button>
+            </div>
+            <label class="sound-toggle">
+              <input id="soundToggle" type="checkbox" checked />
+              <span>자세 알림 소리</span>
+            </label>
+          </section>
+
+          <section class="panel stats-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Daily Summary</p>
+                <h2>오늘의 자세 리포트</h2>
+              </div>
+            </div>
+            <div class="summary-grid">
+              <div class="summary-item"><span>총 작업 시간</span><strong id="totalTime">00:00</strong></div>
+              <div class="summary-item"><span>좋은 자세 유지</span><strong id="goodTime">00:00</strong></div>
+              <div class="summary-item"><span>자세 유지 비율</span><strong id="goodRatio">0%</strong></div>
+              <div class="summary-item"><span>자세 무너짐 횟수</span><strong id="summaryBadCount">0회</strong></div>
+            </div>
+          </section>
+        </section>
+
+        <section class="disclaimer panel">
+          <strong>의학적 진단이 아니에요.</strong>
+          <span>Posture Reminder는 거북목이나 질환을 판단하지 않고, 자세 스캔으로 저장한 기준 자세와의 상대적인 변화를 알려주는 습관 리마인더입니다. 스캔 전에는 OSHA와 Mayo Clinic의 작업환경 가이드에서 공통적으로 말하는 화면 정면 배치, 눈높이에 가까운 모니터, 편안한 어깨와 목 정렬을 참고해 몸 중심, 어깨 수평, 화면과의 거리를 먼저 확인합니다.</span>
+        </section>
+      </section>
+
+      <div id="posturePopup" class="popup hidden">
+        <div class="popup-card">
+          <h2>자세가 흐트러지고 있어요</h2>
+          <p id="popupMessage">잠깐 자세를 리셋해보세요.</p>
+          <div class="popup-actions">
+            <button id="resetPopup" class="primary-action" type="button">다시 고쳤어요</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="finishPopup" class="popup hidden">
+        <div class="popup-card">
+          <h2>집중 시간이 끝났어요</h2>
+          <p>잠깐 목과 어깨를 풀어볼까요? 계속 집중하려면 다시 시작할 수 있어요.</p>
+          <div class="popup-actions">
+            <button id="continueFocus" class="primary-action" type="button">계속 집중</button>
+            <button id="finishFocus" class="icon-toggle" type="button">마무리</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="stretchPopup" class="popup hidden">
+        <div class="popup-card">
+          <h2>스트레칭을 하는 게 좋지 않겠어요?</h2>
+          <p>잠깐 목과 어깨를 풀고 오면 다음 집중이 훨씬 편해질 수 있어요.</p>
+          <div class="popup-actions">
+            <button id="stretchYes" class="primary-action" type="button">예, 스트레칭 보기</button>
+            <button id="stretchNo" class="icon-toggle" type="button">아니오, 계속 공부할래요</button>
+          </div>
+        </div>
+      </div>
+
+      <section id="finalView" class="wizard-view hidden">
+        <div class="panel wizard-card">
+          <p class="eyebrow">Finished</p>
+          <h2>오늘도 고생했어요!</h2>
+          <p>다음 시간까지 화이팅!</p>
+          <div class="final-gallery">
+            <img src="assets/finish-message.jpg" alt="몸 관리 잘해서 오래오래 합시다" />
+          </div>
+          <button id="finalStretch" class="primary-action" type="button">스트레칭하기</button>
+          <button id="downloadReport" class="primary-action" type="button">오늘 집중 자세 report JPG 저장</button>
+          <button id="restartApp" class="primary-action" type="button">다시 시작하기</button>
+        </div>
+      </section>
+
+      <div id="floatingCoach" class="floating-coach coach-idle" role="status" aria-live="polite">
+        <div class="coach-avatar" aria-hidden="true"></div>
+        <div class="coach-copy">
+          <strong id="coachTitle">자세 코치</strong>
+          <p id="coachMessage">집중을 시작하면 옆에서 자세 변화를 같이 봐드릴게요.</p>
+        </div>
+        <div id="coachActions" class="coach-actions hidden">
+          <button id="coachReset" class="coach-primary" type="button">다시 고쳤어요</button>
+        </div>
+      </div>
+
+      <div id="toast" class="toast hidden"></div>
+    </main>
+
+    <script>
+      const postureSettings = {
+        headDrop: 0.12,
+        faceToShoulderChange: 0.15,
+        shoulderWidthIncrease: 0.12,
+        shoulderWidthDecrease: 0.12,
+        shoulderTilt: 0.06,
+        headOffset: 0.1,
+        badScoreThreshold: 70,
+      };
+
+      const scanReadinessSettings = {
+        centerMin: 0.32,
+        centerMax: 0.68,
+        maxShoulderTiltRatio: 0.1,
+        maxHeadOffsetRatio: 0.18,
+        minShoulderWidthRatio: 0.14,
+        maxShoulderWidthRatio: 0.52,
+        holdMs: 1600,
+      };
+
+      const notificationCooldownMs = 30000;
+      const defaultTitle = document.title;
+      const els = {
+        welcomeView: document.getElementById("welcomeView"),
+        notificationView: document.getElementById("notificationView"),
+        timeView: document.getElementById("timeView"),
+        alertDelayView: document.getElementById("alertDelayView"),
+        calibrationView: document.getElementById("calibrationView"),
+        cameraScanView: document.getElementById("cameraScanView"),
+        scanCompleteView: document.getElementById("scanCompleteView"),
+        focusView: document.getElementById("focusView"),
+        finalView: document.getElementById("finalView"),
+        goTimeSetup: document.getElementById("goTimeSetup"),
+        allowNotification: document.getElementById("allowNotification"),
+        openCoachWidget: document.getElementById("openCoachWidget"),
+        skipNotification: document.getElementById("skipNotification"),
+        notificationStatus: document.getElementById("notificationStatus"),
+        goCalibration: document.getElementById("goCalibration"),
+        goScanSetup: document.getElementById("goScanSetup"),
+        beginCalibrationFlow: document.getElementById("beginCalibrationFlow"),
+        startFocusAfterScan: document.getElementById("startFocusAfterScan"),
+        focusHours: document.getElementById("focusHours"),
+        focusMinutes: document.getElementById("focusMinutes"),
+        focusSeconds: document.getElementById("focusSeconds"),
+        focusTimeDisplay: document.getElementById("focusTimeDisplay"),
+        alertHours: document.getElementById("alertHours"),
+        alertMinutes: document.getElementById("alertMinutes"),
+        alertSeconds: document.getElementById("alertSeconds"),
+        alertDelayDisplay: document.getElementById("alertDelayDisplay"),
+        remainingTime: document.getElementById("remainingTime"),
+        video: document.getElementById("video"),
+        overlay: document.getElementById("overlay"),
+        scanVideoShell: document.getElementById("scanVideoShell"),
+        focusVideoShell: document.getElementById("focusVideoShell"),
+        cameraEmpty: document.getElementById("cameraEmpty"),
+        cameraBadge: document.getElementById("cameraBadge"),
+        cameraError: document.getElementById("cameraError"),
+        scanRing: document.getElementById("scanRing"),
+        countdown: document.getElementById("countdown"),
+        cameraPill: document.getElementById("cameraPill"),
+        scanCameraPill: document.getElementById("scanCameraPill"),
+        precheckPanel: document.getElementById("precheckPanel"),
+        precheckTitle: document.getElementById("precheckTitle"),
+        precheckMessages: document.getElementById("precheckMessages"),
+        statusPanel: document.getElementById("statusPanel"),
+        statusIcon: document.getElementById("statusIcon"),
+        statusLabel: document.getElementById("statusLabel"),
+        statusMessage: document.getElementById("statusMessage"),
+        score: document.getElementById("score"),
+        liveReasonText: document.getElementById("liveReasonText"),
+        sessionTime: document.getElementById("sessionTime"),
+        badCount: document.getElementById("badCount"),
+        totalTime: document.getElementById("totalTime"),
+        goodTime: document.getElementById("goodTime"),
+        goodRatio: document.getElementById("goodRatio"),
+        summaryBadCount: document.getElementById("summaryBadCount"),
+        recalibrate: document.getElementById("recalibrate"),
+        editFocusTime: document.getElementById("editFocusTime"),
+        editAlertTime: document.getElementById("editAlertTime"),
+        openCoachWidgetFromControls: document.getElementById("openCoachWidgetFromControls"),
+        soundToggle: document.getElementById("soundToggle"),
+        finishFromControls: document.getElementById("finishFromControls"),
+        restartFromControls: document.getElementById("restartFromControls"),
+        posturePopup: document.getElementById("posturePopup"),
+        popupMessage: document.getElementById("popupMessage"),
+        resetPopup: document.getElementById("resetPopup"),
+        finishPopup: document.getElementById("finishPopup"),
+        continueFocus: document.getElementById("continueFocus"),
+        finishFocus: document.getElementById("finishFocus"),
+        stretchPopup: document.getElementById("stretchPopup"),
+        stretchYes: document.getElementById("stretchYes"),
+        stretchNo: document.getElementById("stretchNo"),
+        finalStretch: document.getElementById("finalStretch"),
+        restartApp: document.getElementById("restartApp"),
+        downloadReport: document.getElementById("downloadReport"),
+        floatingCoach: document.getElementById("floatingCoach"),
+        coachTitle: document.getElementById("coachTitle"),
+        coachMessage: document.getElementById("coachMessage"),
+        coachActions: document.getElementById("coachActions"),
+        coachReset: document.getElementById("coachReset"),
+        toast: document.getElementById("toast"),
+      };
+
+      const state = {
+        status: "idle",
+        pose: null,
+        baseline: null,
+        isCameraOn: false,
+        isWorking: false,
+        totalWorkingTime: 0,
+        goodPostureTime: 0,
+        badPostureTime: 0,
+        badPostureCount: 0,
+        badCandidateStartedAt: null,
+        goodCandidateStartedAt: null,
+        lastNotificationAt: 0,
+        lastTickAt: Date.now(),
+        poseEngine: null,
+        poseLoopRunning: false,
+        focusDurationMs: 25 * 60 * 1000,
+        focusRemainingMs: 25 * 60 * 1000,
+        focusFinished: false,
+        alertDelayMs: 10 * 1000,
+        reuseBaselineNextSession: false,
+        returnToFocusAfterTimeEdit: false,
+        titleAlertTimer: null,
+        coachMood: "idle",
+        coachTitleText: "자세 코치",
+        coachMessageText: "집중을 시작하면 옆에서 자세 변화를 같이 봐드릴게요.",
+        coachWindow: null,
+        coachWindowEls: null,
+        coachCanvas: null,
+        coachVideo: null,
+        coachCanvasContext: null,
+        coachActionsVisible: false,
+        soundEnabled: true,
+        alertSoundTimer: null,
+        audioContext: null,
+      };
+
+      function formatClock(milliseconds) {
+        const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      }
+
+      function formatDuration(milliseconds) {
+        const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      }
+
+      function readTimeSegments(hoursEl, minutesEl, secondsEl) {
+        const read = (element) => {
+          const value = Number.parseInt(element.value, 10);
+          if (Number.isNaN(value)) return 0;
+          return Math.max(0, value);
+        };
+        return ((read(hoursEl) * 60 + read(minutesEl)) * 60 + read(secondsEl)) * 1000;
+      }
+
+      function normalizeTimeInputs(hoursEl, minutesEl, secondsEl) {
+        const totalSeconds = Math.floor(readTimeSegments(hoursEl, minutesEl, secondsEl) / 1000);
+        const hours = Math.min(99, Math.floor(totalSeconds / 3600));
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        hoursEl.value = String(hours);
+        minutesEl.value = String(minutes);
+        secondsEl.value = String(seconds);
+      }
+
+      function updateFocusDuration() {
+        state.focusDurationMs = readTimeSegments(els.focusHours, els.focusMinutes, els.focusSeconds);
+        state.focusRemainingMs = state.focusDurationMs;
+        els.focusTimeDisplay.textContent = formatClock(state.focusDurationMs);
+        els.remainingTime.textContent = formatClock(state.focusRemainingMs);
+      }
+
+      function updateAlertDelay() {
+        state.alertDelayMs = Math.max(1000, readTimeSegments(els.alertHours, els.alertMinutes, els.alertSeconds));
+        els.alertDelayDisplay.textContent = formatClock(state.alertDelayMs);
+      }
+
+      function showView(viewName) {
+        [els.welcomeView, els.notificationView, els.timeView, els.alertDelayView, els.calibrationView, els.cameraScanView, els.scanCompleteView, els.focusView, els.finalView].forEach((view) => view.classList.add("hidden"));
+        els[viewName].classList.remove("hidden");
+      }
+
+      function moveCameraTo(targetShell) {
+        [els.video, els.overlay, els.cameraEmpty, els.cameraBadge, els.cameraError, els.scanRing, els.countdown].forEach((element) => {
+          if (element && element.parentElement !== targetShell) targetShell.appendChild(element);
+        });
+      }
+
+      async function requestNotificationPermission() {
+        if (!("Notification" in window)) {
+          els.notificationStatus.textContent = "이 브라우저는 알림을 지원하지 않아요.";
+          return "unsupported";
+        }
+        if (Notification.permission === "default") {
+          try { await Notification.requestPermission(); } catch {}
+        }
+        updateNotificationStatus();
+        return Notification.permission;
+      }
+
+      function notifyOutsideTab(title, body) {
+        if ("Notification" in window && Notification.permission === "granted") new Notification(title, { body });
+      }
+
+      function pulseTabTitle(message) {
+        if (!document.hidden) {
+          document.title = defaultTitle;
+          return;
+        }
+        window.clearTimeout(state.titleAlertTimer);
+        document.title = `자세 확인! ${message}`;
+        state.titleAlertTimer = window.setTimeout(() => {
+          document.title = defaultTitle;
+        }, 10000);
+      }
+
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) document.title = defaultTitle;
+      });
+
+      function setCoach(mood, title, message) {
+        state.coachMood = mood;
+        state.coachTitleText = title;
+        state.coachMessageText = message;
+        state.coachActionsVisible = mood === "bad";
+        els.floatingCoach.classList.remove("coach-idle", "coach-good", "coach-warning", "coach-bad");
+        els.floatingCoach.classList.add(`coach-${mood}`);
+        els.coachTitle.textContent = title;
+        els.coachMessage.textContent = message;
+        els.coachActions.classList.toggle("hidden", !state.coachActionsVisible);
+        syncCoachWindow();
+      }
+
+      function syncCoachWindow() {
+        drawCoachCanvas();
+        if (!state.coachWindow || state.coachWindow.closed || !state.coachWindowEls) return;
+        const { card, title, message, actions } = state.coachWindowEls;
+        card.className = `pip-coach coach-${state.coachMood}`;
+        title.textContent = state.coachTitleText;
+        message.textContent = state.coachMessageText;
+        actions.style.display = state.coachActionsVisible ? "flex" : "none";
+      }
+
+      function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 3) {
+        const words = text.split(" ");
+        const lines = [];
+        let line = "";
+        words.forEach((word) => {
+          const testLine = line ? `${line} ${word}` : word;
+          if (ctx.measureText(testLine).width > maxWidth && line) {
+            lines.push(line);
+            line = word;
+          } else {
+            line = testLine;
+          }
+        });
+        if (line) lines.push(line);
+        lines.slice(0, maxLines).forEach((textLine, index) => ctx.fillText(textLine, x, y + index * lineHeight));
+      }
+
+      function drawCoachCharacter(ctx, x, y, scale, strokeColor, fillColor) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.strokeStyle = strokeColor;
+        ctx.fillStyle = fillColor;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(30, 38);
+        ctx.bezierCurveTo(30, 19, 44, 10, 58, 13);
+        ctx.bezierCurveTo(75, 17, 83, 30, 81, 47);
+        ctx.bezierCurveTo(78, 63, 62, 70, 47, 66);
+        ctx.bezierCurveTo(36, 63, 30, 52, 30, 38);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(50, 67);
+        ctx.bezierCurveTo(42, 69, 37, 75, 39, 83);
+        ctx.bezierCurveTo(42, 88, 48, 86, 51, 90);
+        ctx.bezierCurveTo(55, 86, 61, 90, 65, 84);
+        ctx.bezierCurveTo(67, 76, 62, 69, 55, 67);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(43, 14);
+        ctx.lineTo(39, 4);
+        ctx.moveTo(55, 12);
+        ctx.lineTo(56, 2);
+        ctx.moveTo(66, 18);
+        ctx.lineTo(73, 8);
+        ctx.moveTo(74, 28);
+        ctx.lineTo(84, 22);
+        ctx.moveTo(32, 25);
+        ctx.lineTo(23, 18);
+        ctx.stroke();
+
+        ctx.fillStyle = strokeColor;
+        ctx.beginPath();
+        ctx.arc(39, 39, 3, 0, Math.PI * 2);
+        ctx.arc(72, 39, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(48, 38);
+        ctx.bezierCurveTo(48, 32, 52, 29, 56, 30);
+        ctx.bezierCurveTo(61, 31, 64, 35, 63, 40);
+        ctx.bezierCurveTo(62, 45, 58, 47, 54, 46);
+        ctx.bezierCurveTo(50, 45, 48, 42, 48, 38);
+        ctx.stroke();
+
+        ctx.lineWidth = 2.6;
+        ctx.beginPath();
+        ctx.moveTo(47, 55);
+        ctx.bezierCurveTo(51, 59, 58, 59, 62, 55);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawCoachCanvas() {
+        if (!state.coachCanvasContext || !state.coachCanvas) return;
+        const ctx = state.coachCanvasContext;
+        const moodColors = {
+          idle: ["#111827", "#312e81", "#38bdf8"],
+          good: ["#083344", "#0f766e", "#2dd4bf"],
+          warning: ["#422006", "#92400e", "#facc15"],
+          bad: ["#431407", "#9f1239", "#fb7185"],
+        };
+        const [from, to, accent] = moodColors[state.coachMood] || moodColors.idle;
+        ctx.clearRect(0, 0, 720, 320);
+        const gradient = ctx.createLinearGradient(0, 0, 720, 320);
+        gradient.addColorStop(0, from);
+        gradient.addColorStop(1, to);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 720, 320);
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = 8;
+        ctx.strokeRect(8, 8, 704, 304);
+
+        drawCoachCharacter(ctx, 36, 70, 1.28, "#f8fbff", "rgba(255,255,255,0.04)");
+
+        ctx.fillStyle = "#f8fbff";
+        ctx.font = "700 34px Pretendard, Arial, sans-serif";
+        ctx.fillText(state.coachTitleText, 180, 116);
+        ctx.fillStyle = "#dbeafe";
+        ctx.font = "500 25px Pretendard, Arial, sans-serif";
+        wrapCanvasText(ctx, state.coachMessageText, 180, 164, 480, 34, 3);
+      }
+
+      async function openVideoPictureInPictureCoach() {
+        if (!document.pictureInPictureEnabled) return false;
+        if (!state.coachCanvas) {
+          const canvas = document.createElement("canvas");
+          canvas.width = 720;
+          canvas.height = 320;
+          canvas.style.display = "none";
+          const video = document.createElement("video");
+          video.muted = true;
+          video.playsInline = true;
+          video.style.display = "none";
+          document.body.append(canvas, video);
+          state.coachCanvas = canvas;
+          state.coachCanvasContext = canvas.getContext("2d");
+          state.coachVideo = video;
+          video.srcObject = canvas.captureStream(1);
+        }
+        drawCoachCanvas();
+        await state.coachVideo.play();
+        await state.coachVideo.requestPictureInPicture();
+        if (els.notificationStatus) els.notificationStatus.textContent = "플로팅 코치가 열렸어요. 다른 탭 위에서도 작은 코치 화면이 보일 거예요.";
+        return true;
+      }
+
+      async function openFloatingCoachWindow() {
+        if (!("documentPictureInPicture" in window)) {
+          try {
+            const opened = await openVideoPictureInPictureCoach();
+            if (opened) return;
+          } catch {}
+          const message = "이 브라우저에서는 다른 탭 위에 남는 플로팅 코치를 지원하지 않아요. Chrome 최신 버전에서 열면 가장 안정적으로 동작합니다.";
+          setCoach("warning", "플로팅 창 미지원", message);
+          if (els.notificationStatus) els.notificationStatus.textContent = message;
+          return;
+        }
+
+        try {
+          const coachWindow = await window.documentPictureInPicture.requestWindow({ width: 360, height: 168 });
+          state.coachWindow = coachWindow;
+          const doc = coachWindow.document;
+          doc.body.innerHTML = "";
+          const style = doc.createElement("style");
+          style.textContent = `
+            * { box-sizing: border-box; }
+            html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; font-family: Pretendard, Inter, system-ui, sans-serif; background: transparent; }
+            body { display: grid; place-items: center; padding: 10px; background: linear-gradient(135deg, #111827, #1e1b4b); color: #e5edff; }
+            .pip-coach { display: grid; grid-template-columns: 58px 1fr; gap: 12px; align-items: center; width: 100%; min-height: 128px; padding: 14px; border: 1px solid rgba(165, 180, 252, .32); border-radius: 18px; background: rgba(15, 23, 42, .88); box-shadow: 0 16px 40px rgba(0,0,0,.28); }
+            .avatar { width: 58px; height: 58px; position: relative; filter: drop-shadow(0 10px 18px rgba(56,189,248,.18)); }
+            .avatar::before { content: ""; position: absolute; inset: -5px; background: center / contain no-repeat url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23f8fbff' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M30 38 C30 19 44 10 58 13 C75 17 83 30 81 47 C78 63 62 70 47 66 C36 63 30 52 30 38Z' stroke-width='3'/%3E%3Cpath d='M48 38 C48 32 52 29 56 30 C61 31 64 35 63 40 C62 45 58 47 54 46 C50 45 48 42 48 38Z' stroke-width='3'/%3E%3Cpath d='M47 55 C51 59 58 59 62 55' stroke-width='2.6'/%3E%3Cpath d='M50 67 C42 69 37 75 39 83 C42 88 48 86 51 90 C55 86 61 90 65 84 C67 76 62 69 55 67' stroke-width='3'/%3E%3Cpath d='M43 14 L39 4 M55 12 L56 2 M66 18 L73 8 M74 28 L84 22 M32 25 L23 18' stroke-width='3'/%3E%3C/g%3E%3Ccircle cx='39' cy='39' r='3' fill='%23f8fbff'/%3E%3Ccircle cx='72' cy='39' r='3' fill='%23f8fbff'/%3E%3C/svg%3E"); }
+            strong { display: block; margin-bottom: 5px; color: #f8fbff; font-size: 15px; }
+            p { margin: 0; color: #dbeafe; font-size: 14px; line-height: 1.45; word-break: keep-all; overflow-wrap: break-word; }
+            .actions { grid-column: 1 / -1; display: none; justify-content: flex-end; gap: 8px; }
+            button { min-height: 32px; padding: 0 11px; border: 1px solid rgba(255,255,255,.24); border-radius: 999px; background: rgba(15,23,42,.58); color: #fff; cursor: pointer; font-weight: 800; }
+            .primary { border-color: rgba(191,219,254,.65); background: linear-gradient(135deg, #60a5fa, #a78bfa); color: #07111f; }
+            .coach-good { border-color: rgba(45, 212, 191, .58); background: rgba(12, 48, 55, .9); }
+            .coach-warning { border-color: rgba(250, 204, 21, .72); background: rgba(63, 45, 12, .92); }
+            .coach-bad { border-color: rgba(251, 146, 60, .78); background: rgba(67, 28, 12, .94); }
+          `;
+          doc.head.appendChild(style);
+          const card = doc.createElement("div");
+          card.className = "pip-coach";
+          const avatar = doc.createElement("div");
+          avatar.className = "avatar";
+          const copy = doc.createElement("div");
+          const title = doc.createElement("strong");
+          const message = doc.createElement("p");
+          const actions = doc.createElement("div");
+          actions.className = "actions";
+          const reset = doc.createElement("button");
+          reset.className = "primary";
+          reset.type = "button";
+          reset.textContent = "다시 고쳤어요";
+          reset.addEventListener("click", acknowledgePostureFixed);
+          actions.append(reset);
+          copy.append(title, message);
+          card.append(avatar, copy, actions);
+          doc.body.appendChild(card);
+          state.coachWindowEls = { card, title, message, actions };
+          coachWindow.addEventListener("pagehide", () => {
+            state.coachWindow = null;
+            state.coachWindowEls = null;
+          });
+          syncCoachWindow();
+          if (els.notificationStatus) els.notificationStatus.textContent = "플로팅 코치 창이 열렸어요. 다른 탭을 봐도 이 작은 창은 계속 떠 있어요.";
+        } catch (error) {
+          const message = "플로팅 코치 창을 열지 못했어요. 브라우저가 작은 창 열기를 막았을 수 있어요.";
+          setCoach("warning", "플로팅 창 열기 실패", message);
+          if (els.notificationStatus) els.notificationStatus.textContent = message;
+        }
+      }
+
+      function updateCoachForStatus(status, message) {
+        if (status === "working_bad") {
+          setCoach("bad", "자세 코치가 부르는 중", message || "잠깐 자세를 리셋해볼까요?");
+          return;
+        }
+        if (status === "working_good") {
+          setCoach("good", "좋아요", "지금은 기준 자세에 가깝게 유지되고 있어요.");
+          return;
+        }
+        if (status === "calibrating") {
+          setCoach("warning", "스캔 중", "눈, 코, 어깨 포인트를 보며 기준 자세를 저장하고 있어요.");
+          return;
+        }
+        setCoach("idle", "자세 코치", message || "집중을 시작하면 옆에서 자세 변화를 같이 봐드릴게요.");
+      }
+
+      function updateNotificationStatus() {
+        if (!("Notification" in window)) {
+          els.notificationStatus.textContent = "이 브라우저는 알림을 지원하지 않아요.";
+          return;
+        }
+
+        if (Notification.permission === "granted") {
+          els.notificationStatus.textContent = "알림 허용됨: 다른 창에서도 자세 알림을 받을 수 있어요.";
+        } else if (Notification.permission === "denied") {
+          els.notificationStatus.textContent = "알림 차단됨: 브라우저 주소창 권한 설정에서 다시 허용할 수 있어요.";
+        } else {
+          els.notificationStatus.textContent = "알림 권한이 아직 설정되지 않았어요.";
+        }
+      }
+
+      function setStatus(status, message) {
+        state.status = status;
+        const labels = {
+          idle: "대기 중",
+          camera_ready: "대기 중",
+          calibrating: "자세 스캔 중",
+          calibrated: "대기 중",
+          working_good: "좋은 자세 유지 중",
+          working_bad: "자세가 무너졌어요",
+          finished: "작업 종료",
+        };
+        els.statusLabel.textContent = labels[status] || "대기 중";
+        if (message) els.statusMessage.textContent = message;
+        els.statusPanel.classList.toggle("status-good", status === "working_good");
+        els.statusPanel.classList.toggle("status-bad", status === "working_bad");
+        els.statusPanel.classList.remove("status-caution");
+        els.statusIcon.textContent = status === "working_bad" ? "!" : "OK";
+        updateCoachForStatus(status, message);
+        updateButtons();
+      }
+
+      function updateScoreWarning(score) {
+        const isCaution = state.isWorking && score > 0 && score < postureSettings.badScoreThreshold;
+        els.statusPanel.classList.toggle("status-caution", isCaution);
+        if (isCaution) {
+          els.statusLabel.textContent = "주의 상태";
+          els.statusMessage.textContent = "주의: 자세가 흐트러지고 있어요.";
+          els.statusIcon.textContent = "!";
+          if (state.status !== "working_bad") {
+            setCoach("warning", "살짝 흐트러졌어요", "70점 아래로 내려갔어요. 다시 5초 동안 안정적으로 유지하면 좋음으로 바뀌어요.");
+          }
+        }
+      }
+
+      function updateButtons() {
+        els.recalibrate.disabled = !state.isCameraOn || state.status === "calibrating";
+      }
+
+      function updateStats() {
+        els.sessionTime.textContent = formatDuration(state.totalWorkingTime);
+        els.totalTime.textContent = formatDuration(state.totalWorkingTime);
+        els.goodTime.textContent = formatDuration(state.goodPostureTime);
+        els.badCount.textContent = String(state.badPostureCount);
+        els.summaryBadCount.textContent = `${state.badPostureCount}회`;
+        const ratio = state.totalWorkingTime ? Math.round((state.goodPostureTime / state.totalWorkingTime) * 100) : 0;
+        els.goodRatio.textContent = `${ratio}%`;
+      }
+
+      function playAlertBeep() {
+        if (!state.soundEnabled) return;
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) return;
+          if (!state.audioContext) state.audioContext = new AudioContextClass();
+          if (state.audioContext.state === "suspended") state.audioContext.resume();
+          const oscillator = state.audioContext.createOscillator();
+          const gain = state.audioContext.createGain();
+          oscillator.type = "sine";
+          oscillator.frequency.setValueAtTime(740, state.audioContext.currentTime);
+          gain.gain.setValueAtTime(0.0001, state.audioContext.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.18, state.audioContext.currentTime + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, state.audioContext.currentTime + 0.28);
+          oscillator.connect(gain);
+          gain.connect(state.audioContext.destination);
+          oscillator.start();
+          oscillator.stop(state.audioContext.currentTime + 0.3);
+        } catch {}
+      }
+
+      function startAlertSoundLoop() {
+        if (!state.soundEnabled || state.alertSoundTimer) return;
+        playAlertBeep();
+        state.alertSoundTimer = window.setInterval(playAlertBeep, 1400);
+      }
+
+      function stopAlertSoundLoop() {
+        if (state.alertSoundTimer) {
+          window.clearInterval(state.alertSoundTimer);
+          state.alertSoundTimer = null;
+        }
+      }
+
+      function showToast(message) {
+        const now = Date.now();
+        if (now - state.lastNotificationAt < notificationCooldownMs) return;
+        state.lastNotificationAt = now;
+        els.toast.textContent = message;
+        els.toast.classList.remove("hidden");
+        setCoach("bad", "잠깐 자세 체크", message);
+        showPosturePopup(message);
+        startAlertSoundLoop();
+        notifyOutsideTab("Posture Reminder", message);
+        pulseTabTitle(message);
+        window.setTimeout(() => els.toast.classList.add("hidden"), 4200);
+      }
+
+      function showPosturePopup(message) {
+        els.popupMessage.textContent = message;
+        els.posturePopup.classList.remove("hidden");
+        state.coachActionsVisible = true;
+        els.coachActions.classList.remove("hidden");
+        syncCoachWindow();
+      }
+
+      function hidePosturePopup() { els.posturePopup.classList.add("hidden"); }
+      function showFinishPopup() { els.finishPopup.classList.remove("hidden"); notifyOutsideTab("집중 시간이 끝났어요", "잠깐 목과 어깨를 풀어볼까요?"); }
+      function hideFinishPopup() { els.finishPopup.classList.add("hidden"); }
+      function showStretchPopup() { els.stretchPopup.classList.remove("hidden"); }
+      function hideStretchPopup() { els.stretchPopup.classList.add("hidden"); }
+
+      function acknowledgePostureFixed() {
+        hidePosturePopup();
+        stopAlertSoundLoop();
+        setStatus("working_good", "좋아요. 현재 자세가 안정적이에요.");
+        state.badCandidateStartedAt = null;
+        state.goodCandidateStartedAt = null;
+      }
+
+      function downloadDailyReport() {
+        const canvas = document.createElement("canvas");
+        canvas.width = 1200;
+        canvas.height = 1600;
+        const ctx = canvas.getContext("2d");
+        const ratio = state.totalWorkingTime ? Math.round((state.goodPostureTime / state.totalWorkingTime) * 100) : 0;
+        const badTime = Math.max(0, state.totalWorkingTime - state.goodPostureTime);
+        const dateText = new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
+        const todayKey = new Date().toISOString().slice(0, 10);
+        const storedStreak = JSON.parse(localStorage.getItem("postureReminderStreak") || "{\"count\":0,\"lastDate\":\"\"}");
+        const qualifiesForStreak = ratio >= 90 && state.totalWorkingTime > 0;
+        const priorCount = storedStreak.lastDate === todayKey ? Math.max(0, storedStreak.count - (storedStreak.qualified ? 1 : 0)) : storedStreak.count;
+        const streakCount = qualifiesForStreak ? priorCount + 1 : 0;
+        localStorage.setItem("postureReminderStreak", JSON.stringify({ count: streakCount, lastDate: todayKey, qualified: qualifiesForStreak }));
+
+        const bg = ctx.createLinearGradient(0, 0, 1200, 1600);
+        bg.addColorStop(0, "#111827");
+        bg.addColorStop(0.55, "#1e1b4b");
+        bg.addColorStop(1, "#0f172a");
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, 1200, 1600);
+
+        ctx.fillStyle = "rgba(255,255,255,0.06)";
+        ctx.fillRect(70, 70, 1060, 1460);
+        ctx.strokeStyle = "rgba(191,219,254,0.28)";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(70, 70, 1060, 1460);
+
+        ctx.fillStyle = "#93c5fd";
+        ctx.font = "700 34px Pretendard, Arial, sans-serif";
+        ctx.fillText("POSTURE REMINDER", 120, 150);
+        ctx.fillStyle = "#f8fbff";
+        ctx.font = "800 74px Pretendard, Arial, sans-serif";
+        ctx.fillText("오늘 집중 자세 report", 120, 250);
+        ctx.fillStyle = "#cbd5e1";
+        ctx.font = "500 30px Pretendard, Arial, sans-serif";
+        ctx.fillText(dateText, 120, 305);
+
+        const cards = [
+          ["총 집중 시간", formatDuration(state.totalWorkingTime)],
+          ["좋은 자세 유지", formatDuration(state.goodPostureTime)],
+          ["흐트러진 시간", formatDuration(badTime)],
+          ["자세 유지 비율", `${ratio}%`],
+          ["자세 무너짐 횟수", `${state.badPostureCount}회`],
+          ["좋은 자세 streak", `🔥 ${streakCount}일`],
+        ];
+
+        cards.forEach(([label, value], index) => {
+          const col = index % 2;
+          const row = Math.floor(index / 2);
+          const x = 120 + col * 500;
+          const y = 400 + row * 210;
+          ctx.fillStyle = "rgba(15,23,42,0.66)";
+          ctx.fillRect(x, y, 440, 150);
+          ctx.strokeStyle = "rgba(165,180,252,0.22)";
+          ctx.strokeRect(x, y, 440, 150);
+          ctx.fillStyle = "#b9c5d8";
+          ctx.font = "700 26px Pretendard, Arial, sans-serif";
+          ctx.fillText(label, x + 32, y + 50);
+          ctx.fillStyle = index === 3 && ratio < 70 ? "#facc15" : "#f8fbff";
+          ctx.font = "850 46px Pretendard, Arial, sans-serif";
+          ctx.fillText(value, x + 32, y + 112);
+        });
+
+        ctx.fillStyle = "#f8fbff";
+        ctx.font = "800 42px Pretendard, Arial, sans-serif";
+        ctx.fillText("오늘의 메시지", 120, 1090);
+        ctx.fillStyle = "#dbeafe";
+        ctx.font = "500 31px Pretendard, Arial, sans-serif";
+        wrapCanvasText(ctx, qualifiesForStreak ? "좋아요. 오늘 자세 유지 비율이 90%를 넘어서 좋은 자세 streak에 포함됐어요. 다음 집중 시간에도 이 흐름을 이어가요." : "오늘 리포트가 저장됐어요. 좋은 자세 streak는 하루 자세 유지 비율이 90% 이상일 때 올라갑니다.", 120, 1150, 940, 44, 4);
+
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "500 24px Pretendard, Arial, sans-serif";
+        wrapCanvasText(ctx, "Streak 기준: 오늘 집중 자세 유지 비율 90% 이상. 본 리포트는 의학적 진단이 아니라 기준 자세 대비 상대적인 자세 변화 요약입니다.", 120, 1430, 920, 34, 2);
+
+        const link = document.createElement("a");
+        link.download = `posture-report-${new Date().toISOString().slice(0, 10)}.jpg`;
+        link.href = canvas.toDataURL("image/jpeg", 0.92);
+        link.click();
+      }
+
+      function resetAppToStart() {
+        state.isWorking = false;
+        state.baseline = null;
+        state.badCandidateStartedAt = null;
+        state.goodCandidateStartedAt = null;
+        state.badPostureCount = 0;
+        state.totalWorkingTime = 0;
+        state.goodPostureTime = 0;
+        state.badPostureTime = 0;
+        state.focusFinished = false;
+        state.reuseBaselineNextSession = false;
+        state.returnToFocusAfterTimeEdit = false;
+        state.focusRemainingMs = state.focusDurationMs;
+        hidePosturePopup();
+        stopAlertSoundLoop();
+        hideFinishPopup();
+        hideStretchPopup();
+        updateStats();
+        updateFocusDuration();
+        updateAlertDelay();
+        setStatus(state.isCameraOn ? "camera_ready" : "idle", "바른 자세를 기준으로 저장해볼까요?");
+        showView("welcomeView");
+      }
+
+      function toPose(landmarks) {
+        if (!landmarks) return null;
+        const width = els.overlay.width;
+        const height = els.overlay.height;
+        const point = (index) => ({ x: landmarks[index].x * width, y: landmarks[index].y * height, score: landmarks[index].visibility || 1 });
+        const nose = point(0);
+        const leftEar = point(7);
+        const rightEar = point(8);
+        const leftShoulder = point(11);
+        const rightShoulder = point(12);
+        const faceCenter = { x: (nose.x + leftEar.x + rightEar.x) / 3, y: (nose.y + leftEar.y + rightEar.y) / 3 };
+        const shoulderCenter = { x: (leftShoulder.x + rightShoulder.x) / 2, y: (leftShoulder.y + rightShoulder.y) / 2 };
+        const shoulderWidth = Math.hypot(leftShoulder.x - rightShoulder.x, leftShoulder.y - rightShoulder.y);
+        return {
+          faceCenterX: faceCenter.x,
+          faceCenterY: faceCenter.y,
+          shoulderCenterX: shoulderCenter.x,
+          shoulderCenterY: shoulderCenter.y,
+          shoulderWidth,
+          faceToShoulderDistance: Math.hypot(faceCenter.x - shoulderCenter.x, faceCenter.y - shoulderCenter.y),
+          shoulderTilt: Math.abs(leftShoulder.y - rightShoulder.y),
+          headOffsetFromShoulderCenter: faceCenter.x - shoulderCenter.x,
+          points: { nose, leftEar, rightEar, leftShoulder, rightShoulder },
+        };
+      }
+
+      function averagePose(samples) {
+        if (!samples.length) return null;
+        const sum = samples.reduce((acc, sample) => {
+          for (const key of ["faceCenterX", "faceCenterY", "shoulderCenterX", "shoulderCenterY", "shoulderWidth", "faceToShoulderDistance", "shoulderTilt", "headOffsetFromShoulderCenter"]) {
+            acc[key] += sample[key];
+          }
+          return acc;
+        }, { faceCenterX: 0, faceCenterY: 0, shoulderCenterX: 0, shoulderCenterY: 0, shoulderWidth: 0, faceToShoulderDistance: 0, shoulderTilt: 0, headOffsetFromShoulderCenter: 0 });
+        const count = samples.length;
+        Object.keys(sum).forEach((key) => { sum[key] /= count; });
+        return sum;
+      }
+
+      function evaluatePosture(current, baseline) {
+        if (!current || !baseline) return { isBad: false, score: 0, reasons: [] };
+        const scale = Math.max(baseline.shoulderWidth, 1);
+        const headDropRatio = (current.faceCenterY - baseline.faceCenterY) / scale;
+        const distanceChangeRatio = Math.abs(current.faceToShoulderDistance - baseline.faceToShoulderDistance) / Math.max(baseline.faceToShoulderDistance, 1);
+        const shoulderWidthChangeRatio = (current.shoulderWidth - baseline.shoulderWidth) / Math.max(baseline.shoulderWidth, 1);
+        const shoulderTiltChange = Math.abs(current.shoulderTilt - baseline.shoulderTilt) / scale;
+        const headOffsetChange = Math.abs(current.headOffsetFromShoulderCenter - baseline.headOffsetFromShoulderCenter) / scale;
+        const bodySideShiftRatio = Math.abs(current.shoulderCenterX - baseline.shoulderCenterX) / scale;
+        let score = 100;
+        const reasons = [];
+        if (headDropRatio > postureSettings.headDrop) { score -= 25; reasons.push("face_down"); }
+        if (distanceChangeRatio > postureSettings.faceToShoulderChange) { score -= 25; reasons.push("distance_changed"); }
+        if (shoulderWidthChangeRatio > postureSettings.shoulderWidthIncrease) { score -= 20; reasons.push("closer_to_camera"); }
+        if (shoulderWidthChangeRatio < -postureSettings.shoulderWidthDecrease) { score -= 12; reasons.push("farther_from_camera"); }
+        if (shoulderTiltChange > postureSettings.shoulderTilt) { score -= 15; reasons.push("shoulder_tilt"); }
+        if (headOffsetChange > postureSettings.headOffset) { score -= 15; reasons.push("head_shift"); }
+        if (bodySideShiftRatio > 0.18) { score -= 18; reasons.push("side_shift"); }
+        score = Math.max(0, Math.min(100, Math.round(score)));
+        return { isBad: score < postureSettings.badScoreThreshold, score, reasons };
+      }
+
+      function evaluateScanReadiness(pose) {
+        if (!pose) {
+          return { ready: false, messages: ["현재 자세가 올바르지 않아요. 얼굴과 양쪽 어깨가 카메라에 보이게 앉아주세요."] };
+        }
+        const width = Math.max(els.overlay.width || els.video.videoWidth || 1, 1);
+        const scale = Math.max(pose.shoulderWidth, 1);
+        const faceCenterXRatio = pose.faceCenterX / width;
+        const shoulderCenterXRatio = pose.shoulderCenterX / width;
+        const shoulderWidthRatio = pose.shoulderWidth / width;
+        const shoulderTiltRatio = pose.shoulderTilt / scale;
+        const headOffsetRatio = Math.abs(pose.headOffsetFromShoulderCenter) / scale;
+        const messages = [];
+
+        // 좋은 자세의 절대 진단이 아니라, 신뢰할 수 있는 기준 자세를 저장하기 위한 최소 스캔 조건입니다.
+        if (faceCenterXRatio < scanReadinessSettings.centerMin || faceCenterXRatio > scanReadinessSettings.centerMax || shoulderCenterXRatio < scanReadinessSettings.centerMin || shoulderCenterXRatio > scanReadinessSettings.centerMax) {
+          messages.push("현재 자세가 올바르지 않아요. 몸을 화면 가운데에 가깝게 정렬해주세요.");
+        }
+        if (shoulderTiltRatio > scanReadinessSettings.maxShoulderTiltRatio) {
+          messages.push("현재 자세가 올바르지 않아요. 양쪽 어깨 높이를 조금 더 수평에 가깝게 맞춰주세요.");
+        }
+        if (headOffsetRatio > scanReadinessSettings.maxHeadOffsetRatio) {
+          messages.push("현재 자세가 올바르지 않아요. 고개를 어깨 중심 위에 가깝게 올리고 화면 정면을 바라봐주세요.");
+        }
+        if (shoulderWidthRatio > scanReadinessSettings.maxShoulderWidthRatio) {
+          messages.push("현재 자세가 올바르지 않아요. 화면과 너무 가까워요. 의자를 조금 뒤로 빼주세요.");
+        }
+        if (shoulderWidthRatio < scanReadinessSettings.minShoulderWidthRatio) {
+          messages.push("현재 자세가 올바르지 않아요. 카메라에서 너무 멀어요. 얼굴과 양쪽 어깨가 더 잘 보이게 앉아주세요.");
+        }
+
+        if (!messages.length) {
+          messages.push("좋아요. 이 자세를 기준 자세 후보로 사용할 수 있어요.");
+        }
+        return { ready: messages.length === 1 && messages[0].startsWith("좋아요"), messages };
+      }
+
+      function renderScanReadiness(result) {
+        els.precheckPanel.classList.toggle("is-ready", result.ready);
+        els.precheckPanel.classList.toggle("is-waiting", !result.ready);
+        els.precheckTitle.textContent = result.ready ? "좋아요. 스캔 가능한 자세예요" : "현재 자세가 올바르지 않아요";
+        els.precheckMessages.innerHTML = result.messages.map((message) => `<li>${message}</li>`).join("");
+        setCoach(result.ready ? "good" : "warning", result.ready ? "스캔 준비 완료" : "자세를 고쳐주세요", result.messages[0]);
+      }
+
+      async function waitForScanReadiness() {
+        let readyStartedAt = null;
+        setStatus("camera_ready", "먼저 몸의 중심, 어깨 수평, 화면과의 거리를 확인할게요.");
+        while (state.isCameraOn) {
+          const readiness = evaluateScanReadiness(state.pose);
+          renderScanReadiness(readiness);
+          if (readiness.ready) {
+            if (!readyStartedAt) readyStartedAt = Date.now();
+            if (Date.now() - readyStartedAt >= scanReadinessSettings.holdMs) return true;
+          } else {
+            readyStartedAt = null;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 160));
+        }
+        return false;
+      }
+
+      const reasonCopy = {
+        closer_to_camera: { title: "화면과 너무 가까워졌어요.", detail: "상체를 살짝 뒤로 빼고 등을 등받이에 기대보세요." },
+        farther_from_camera: { title: "몸이 기준보다 뒤로 빠진 것 같아요.", detail: "허리를 세우고 화면을 편하게 바라봐주세요." },
+        face_down: { title: "고개가 기준보다 아래로 내려갔어요.", detail: "화면을 눈높이에 맞추고 턱을 살짝 들어보세요." },
+        distance_changed: { title: "얼굴과 어깨의 정렬이 달라졌어요.", detail: "귀가 어깨 위에 오도록 자세를 리셋해보세요." },
+        shoulder_tilt: { title: "어깨 균형이 기울어졌어요.", detail: "양쪽 어깨 힘을 빼고 수평에 가깝게 맞춰보세요." },
+        head_shift: { title: "고개가 어깨 중심에서 벗어났어요.", detail: "몸을 비틀지 말고 화면 정면을 바라봐주세요." },
+        side_shift: { title: "몸이 기준보다 옆으로 치우쳤어요.", detail: "의자에 앉은 몸을 가운데로 정렬하고 화면 정면을 바라봐주세요." },
+      };
+
+      function topReasons(reasons, limit = 2) {
+        const priority = ["closer_to_camera", "face_down", "side_shift", "distance_changed", "shoulder_tilt", "head_shift", "farther_from_camera"];
+        return priority.filter((reason) => reasons.includes(reason)).slice(0, limit);
+      }
+
+      function messageFor(reasons) {
+        const main = topReasons(reasons, 1)[0];
+        if (!main) return "잠깐 자세를 리셋해보세요.";
+        return `${reasonCopy[main].title} ${reasonCopy[main].detail}`;
+      }
+
+      function updateLiveReasons(evaluation) {
+        if (!evaluation?.reasons?.length) {
+          els.liveReasonText.textContent = "아직 감지된 자세 문제가 없어요.";
+          return;
+        }
+        els.liveReasonText.innerHTML = `<ul>${topReasons(evaluation.reasons, 2).map((reason) => `<li><strong>${reasonCopy[reason].title}</strong> ${reasonCopy[reason].detail}</li>`).join("")}</ul>`;
+      }
+
+      function drawPose(pose) {
+        const ctx = els.overlay.getContext("2d");
+        ctx.clearRect(0, 0, els.overlay.width, els.overlay.height);
+        if (!pose) return;
+        ctx.strokeStyle = "rgba(45, 212, 191, 0.8)";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(pose.points.leftShoulder.x, pose.points.leftShoulder.y);
+        ctx.lineTo(pose.points.rightShoulder.x, pose.points.rightShoulder.y);
+        ctx.stroke();
+        Object.values(pose.points).forEach((point) => {
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, 7, 0, Math.PI * 2);
+          ctx.fillStyle = "#2dd4bf";
+          ctx.fill();
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = "#fff";
+          ctx.stroke();
+        });
+      }
+
+      function onPoseResults(results) {
+        if (els.video.videoWidth && els.video.videoHeight) {
+          els.overlay.width = els.video.videoWidth;
+          els.overlay.height = els.video.videoHeight;
+        }
+        state.pose = toPose(results.poseLandmarks);
+        drawPose(state.pose);
+        const evaluation = evaluatePosture(state.pose, state.baseline);
+        els.score.textContent = String(evaluation.score || 0);
+        updateScoreWarning(evaluation.score || 0);
+        updateLiveReasons(evaluation);
+        if (!state.isWorking) return;
+
+        const now = Date.now();
+        const holdDuration = state.alertDelayMs;
+        const recoveryDuration = 5 * 1000;
+        if (evaluation.isBad) {
+          state.goodCandidateStartedAt = null;
+          if (!state.badCandidateStartedAt) state.badCandidateStartedAt = now;
+          if (now - state.badCandidateStartedAt >= holdDuration && state.status !== "working_bad") {
+            state.badPostureCount += 1;
+            setStatus("working_bad", messageFor(evaluation.reasons));
+            showToast(messageFor(evaluation.reasons));
+          } else if (state.status === "working_bad") {
+            showToast(messageFor(evaluation.reasons));
+          }
+        } else {
+          state.badCandidateStartedAt = null;
+          if (!state.goodCandidateStartedAt) state.goodCandidateStartedAt = now;
+          if (now - state.goodCandidateStartedAt >= recoveryDuration) {
+            const needsRecoveryMessage = state.status !== "working_good" || state.coachMood !== "good" || !els.posturePopup.classList.contains("hidden");
+            if (needsRecoveryMessage) {
+              setStatus("working_good", "좋아요. 현재 자세가 안정적이에요.");
+              hidePosturePopup();
+              stopAlertSoundLoop();
+            }
+          }
+        }
+      }
+
+      async function startCamera() {
+        els.cameraError.classList.add("hidden");
+        if (!navigator.mediaDevices?.getUserMedia) {
+          els.cameraError.textContent = "이 브라우저에서 카메라 API를 사용할 수 없어요. localhost 또는 HTTPS 주소로 열어주세요.";
+          els.cameraError.classList.remove("hidden");
+          return;
+        }
+        els.cameraBadge.classList.remove("hidden");
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }, audio: false });
+          els.video.srcObject = stream;
+          await els.video.play();
+          state.isCameraOn = true;
+          els.cameraEmpty.classList.add("hidden");
+          els.cameraPill.textContent = "카메라 켜짐";
+          els.cameraPill.classList.add("is-on");
+          els.scanCameraPill.textContent = "카메라 켜짐";
+          els.scanCameraPill.classList.add("is-on");
+          setStatus("camera_ready", "바른 자세를 기준으로 저장해볼까요?");
+          if (window.__postureLibraryError || !window.Pose) {
+            els.cameraError.textContent = "카메라는 켜졌지만 포즈 추정 라이브러리를 불러오지 못했어요. 인터넷 연결 후 새로고침하면 추적 포인트가 표시됩니다.";
+            els.cameraError.classList.remove("hidden");
+            return;
+          }
+          const pose = new Pose({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}` });
+          pose.setOptions({ modelComplexity: 0, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+          pose.onResults(onPoseResults);
+          state.poseEngine = pose;
+          state.poseLoopRunning = true;
+          requestAnimationFrame(sendPoseFrame);
+        } catch (error) {
+          const message = error?.message ? ` (${error.message})` : "";
+          els.cameraError.textContent = `카메라를 시작하지 못했어요. 브라우저 권한이나 다른 앱의 카메라 사용 여부를 확인해주세요.${message}`;
+          els.cameraError.classList.remove("hidden");
+        } finally {
+          els.cameraBadge.classList.add("hidden");
+          updateButtons();
+        }
+      }
+
+      async function sendPoseFrame() {
+        if (!state.poseLoopRunning || !state.poseEngine || !state.isCameraOn) return;
+        if (els.video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+          try {
+            await state.poseEngine.send({ image: els.video });
+          } catch {
+            els.cameraError.textContent = "포즈 추적 중 오류가 났어요. 새로고침 후 다시 시도해주세요.";
+            els.cameraError.classList.remove("hidden");
+            state.poseLoopRunning = false;
+            return;
+          }
+        }
+        requestAnimationFrame(sendPoseFrame);
+      }
+
+      async function calibrate() {
+        if (!state.isCameraOn) return;
+        const samples = [];
+        state.isWorking = false;
+        state.badCandidateStartedAt = null;
+        state.goodCandidateStartedAt = null;
+        hidePosturePopup();
+        els.precheckTitle.textContent = "기준 자세를 저장하는 중";
+        els.precheckMessages.innerHTML = "<li>스캔이 끝날 때까지 지금 자세를 편하게 유지해주세요.</li>";
+        els.precheckPanel.classList.remove("is-waiting");
+        els.precheckPanel.classList.add("is-ready");
+        els.scanRing.classList.remove("hidden");
+        setStatus("calibrating", "최대한 바른 자세로 앉아 카메라를 봐주세요. 5초 동안 눈, 코, 어깨 포인트를 보며 자세를 스캔할게요.");
+        for (let second = 5; second >= 1; second -= 1) {
+          els.countdown.textContent = String(second);
+          els.countdown.classList.remove("hidden");
+          const startedAt = Date.now();
+          while (Date.now() - startedAt < 1000) {
+            if (state.pose) samples.push(state.pose);
+            await new Promise((resolve) => setTimeout(resolve, 120));
+          }
+        }
+        els.countdown.classList.add("hidden");
+        els.scanRing.classList.add("hidden");
+        state.baseline = averagePose(samples);
+        if (state.baseline) {
+          setStatus("calibrated", "자세 스캔이 완료되었습니다.");
+          showView("scanCompleteView");
+        } else {
+          setStatus("camera_ready", "얼굴과 어깨가 잘 보이도록 앉은 뒤 다시 시도해주세요.");
+        }
+      }
+
+      async function runScanFlow() {
+        if (!state.isCameraOn) return;
+        const isReady = await waitForScanReadiness();
+        if (isReady) await calibrate();
+      }
+
+      function startWork() {
+        if (!state.baseline) return;
+        state.isWorking = true;
+        state.focusFinished = false;
+        state.focusRemainingMs = state.focusDurationMs;
+        state.lastTickAt = Date.now();
+        state.badCandidateStartedAt = null;
+        state.goodCandidateStartedAt = null;
+        els.remainingTime.textContent = formatClock(state.focusRemainingMs);
+        setStatus("working_good", "좋아요. 현재 자세가 안정적이에요.");
+        requestNotificationPermission();
+      }
+
+      function stopWork() {
+        state.isWorking = false;
+        state.badCandidateStartedAt = null;
+        state.goodCandidateStartedAt = null;
+        state.focusFinished = true;
+        stopAlertSoundLoop();
+        setStatus("finished", "작업을 마쳤어요. 오늘의 자세 리포트를 확인해보세요.");
+      }
+
+      window.setInterval(() => {
+        const now = Date.now();
+        const delta = now - state.lastTickAt;
+        state.lastTickAt = now;
+        if (state.isWorking) {
+          state.totalWorkingTime += delta;
+          state.focusRemainingMs = Math.max(0, state.focusRemainingMs - delta);
+          if (state.status === "working_good") state.goodPostureTime += delta;
+          if (state.status === "working_bad") state.badPostureTime += delta;
+          if (state.focusRemainingMs === 0 && !state.focusFinished) {
+            state.focusFinished = true;
+            state.isWorking = false;
+            setStatus("finished", "집중 시간이 끝났어요. 잠깐 스트레칭을 해볼까요?");
+            showFinishPopup();
+          }
+        }
+        els.remainingTime.textContent = formatClock(state.focusRemainingMs);
+        updateStats();
+      }, 1000);
+
+      function bindTimeInputs(inputs, onChange) {
+        inputs.forEach((input) => {
+          input.addEventListener("focus", () => input.select());
+          input.addEventListener("input", () => {
+            const value = Number.parseInt(input.value, 10);
+            if (!Number.isNaN(value) && value < 0) input.value = "0";
+            onChange();
+          });
+          input.addEventListener("blur", () => {
+            if (inputs === focusInputs) normalizeTimeInputs(els.focusHours, els.focusMinutes, els.focusSeconds);
+            if (inputs === alertInputs) normalizeTimeInputs(els.alertHours, els.alertMinutes, els.alertSeconds);
+            onChange();
+          });
+        });
+      }
+
+      const focusInputs = [els.focusHours, els.focusMinutes, els.focusSeconds];
+      const alertInputs = [els.alertHours, els.alertMinutes, els.alertSeconds];
+      bindTimeInputs(focusInputs, updateFocusDuration);
+      bindTimeInputs(alertInputs, updateAlertDelay);
+
+      els.goTimeSetup.addEventListener("click", () => { updateNotificationStatus(); showView("notificationView"); });
+      els.allowNotification.addEventListener("click", async () => {
+        await requestNotificationPermission();
+      });
+      els.openCoachWidget.addEventListener("click", async () => {
+        await requestNotificationPermission();
+        await openFloatingCoachWindow();
+      });
+      els.skipNotification.addEventListener("click", () => showView("timeView"));
+      els.goCalibration.addEventListener("click", () => {
+        normalizeTimeInputs(els.focusHours, els.focusMinutes, els.focusSeconds);
+        updateFocusDuration();
+        if (state.returnToFocusAfterTimeEdit && state.baseline) {
+          state.returnToFocusAfterTimeEdit = false;
+          state.reuseBaselineNextSession = false;
+          showView("focusView");
+          startWork();
+          return;
+        }
+        showView("alertDelayView");
+      });
+      els.goScanSetup.addEventListener("click", () => {
+        normalizeTimeInputs(els.alertHours, els.alertMinutes, els.alertSeconds);
+        updateAlertDelay();
+        if (state.reuseBaselineNextSession && state.baseline) {
+          state.reuseBaselineNextSession = false;
+          showView("focusView");
+          startWork();
+          return;
+        }
+        showView("calibrationView");
+      });
+      els.beginCalibrationFlow.addEventListener("click", async () => {
+        moveCameraTo(els.scanVideoShell);
+        showView("cameraScanView");
+        if (!state.isCameraOn) await startCamera();
+        if (state.isCameraOn) await runScanFlow();
+      });
+      els.startFocusAfterScan.addEventListener("click", () => { moveCameraTo(els.focusVideoShell); showView("focusView"); startWork(); });
+      els.recalibrate.addEventListener("click", () => { moveCameraTo(els.scanVideoShell); showView("cameraScanView"); runScanFlow(); });
+      els.editFocusTime.addEventListener("click", () => { state.isWorking = false; state.returnToFocusAfterTimeEdit = true; hidePosturePopup(); showView("timeView"); });
+      els.editAlertTime.addEventListener("click", () => { state.isWorking = false; state.reuseBaselineNextSession = true; hidePosturePopup(); showView("alertDelayView"); });
+      els.openCoachWidgetFromControls.addEventListener("click", openFloatingCoachWindow);
+      els.finishFromControls.addEventListener("click", () => { stopWork(); hidePosturePopup(); hideFinishPopup(); hideStretchPopup(); showView("finalView"); });
+      els.restartFromControls.addEventListener("click", resetAppToStart);
+      els.resetPopup.addEventListener("click", acknowledgePostureFixed);
+      els.coachReset.addEventListener("click", acknowledgePostureFixed);
+      els.soundToggle.addEventListener("change", () => {
+        state.soundEnabled = els.soundToggle.checked;
+        if (!state.soundEnabled) stopAlertSoundLoop();
+        else if (!els.posturePopup.classList.contains("hidden")) startAlertSoundLoop();
+      });
+      els.continueFocus.addEventListener("click", () => { hideFinishPopup(); showStretchPopup(); });
+      els.finishFocus.addEventListener("click", () => { hideFinishPopup(); stopWork(); showView("finalView"); });
+      els.stretchYes.addEventListener("click", () => { hideStretchPopup(); window.open("https://www.youtube.com/watch?v=h9aAx9PYYew", "_blank", "noopener,noreferrer"); });
+      els.stretchNo.addEventListener("click", () => { hideStretchPopup(); state.reuseBaselineNextSession = true; showView("timeView"); });
+      els.finalStretch.addEventListener("click", () => { window.open("https://www.youtube.com/watch?v=h9aAx9PYYew", "_blank", "noopener,noreferrer"); });
+      els.downloadReport.addEventListener("click", downloadDailyReport);
+      els.restartApp.addEventListener("click", resetAppToStart);
+
+      updateFocusDuration();
+      updateAlertDelay();
+      updateButtons();
+      updateStats();
+    </script>
+  </body>
+</html>
+

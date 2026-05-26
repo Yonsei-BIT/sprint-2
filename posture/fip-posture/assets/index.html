@@ -1,0 +1,1459 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Posture Reminder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pangolin&family=Winky+Rough:ital,wght@1,700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        color: #eef4ff;
+        background: #070817;
+        font-family: 'Jua', sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 18% 12%, rgba(99, 102, 241, 0.36), transparent 34%),
+          radial-gradient(circle at 82% 2%, rgba(168, 85, 247, 0.28), transparent 30%),
+          linear-gradient(135deg, #070817 0%, #111827 46%, #172554 100%);
+      }
+
+      body, button, input, p, span, strong, li, h1, h2, h3 {
+        word-break: keep-all;
+        overflow-wrap: normal;
+      }
+
+      button, input { font: inherit; }
+
+      .app-shell {
+        width: min(1440px, 100%);
+        margin: 0 auto;
+        padding: 32px;
+      }
+
+      .hidden { display: none !important; }
+
+      .panel {
+        border: 1px solid rgba(165, 180, 252, 0.22);
+        border-radius: 8px;
+        background: rgba(15, 23, 42, 0.76);
+        box-shadow: 0 24px 80px rgba(2, 6, 23, 0.34);
+        backdrop-filter: blur(22px);
+      }
+
+      .eyebrow {
+        margin: 0;
+        color: #a5b4fc;
+        font-size: 0.75rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .wizard-view {
+        min-height: calc(100vh - 64px);
+        display: grid;
+        place-items: center;
+      }
+
+      .wizard-card {
+        width: min(820px, 100%);
+        padding: clamp(28px, 6vw, 56px);
+        text-align: center;
+      }
+
+      .wizard-card h1,
+      .wizard-card h2 {
+        margin: 10px 0 14px;
+        color: #f8fbff;
+      }
+
+      .wizard-card h1 { font-size: clamp(3rem, 10vw, 6rem); }
+      .wizard-card h2 { font-size: clamp(2rem, 6vw, 4rem); }
+
+      .wizard-card p {
+        margin: 0 auto 24px;
+        max-width: 620px;
+        color: #b9c5d8;
+        line-height: 1.65;
+      }
+
+      .primary-action {
+        min-height: 50px;
+        padding: 0 22px;
+        border: 0;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+        color: #fff;
+        cursor: pointer;
+        font-weight: 950;
+        box-shadow: 0 14px 34px rgba(59, 130, 246, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      }
+
+      .primary-action:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 18px 42px rgba(139, 92, 246, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+      }
+
+      .time-picker {
+        display: grid;
+        gap: 14px;
+        justify-items: center;
+        margin: 26px 0;
+      }
+
+      .time-segments {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr auto 1fr;
+        align-items: center;
+        gap: 10px;
+        width: min(520px, 100%);
+      }
+
+      .time-segments input {
+        min-width: 0;
+        padding: 14px 16px;
+        border: 1px solid rgba(165, 180, 252, 0.34);
+        border-radius: 8px;
+        background: rgba(2, 6, 23, 0.36);
+        color: #f8fbff;
+        text-align: center;
+        font-size: clamp(1.5rem, 6vw, 2.7rem);
+        font-weight: 950;
+      }
+
+      .time-separator {
+        color: #a5b4fc;
+        font-size: 2rem;
+        font-weight: 950;
+      }
+
+      .time-labels {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        width: min(520px, 100%);
+        color: #94a3b8;
+        font-size: 0.86rem;
+        font-weight: 850;
+      }
+
+      .time-display {
+        color: #bfdbfe;
+        font-size: clamp(2.6rem, 10vw, 5.2rem);
+        font-weight: 950;
+        line-height: 1;
+      }
+
+      .scan-reference {
+        width: min(760px, 100%);
+        margin: 18px auto;
+        overflow: hidden;
+        border: 1px solid rgba(165, 180, 252, 0.18);
+        border-radius: 8px;
+        background: rgba(2, 6, 23, 0.24);
+      }
+
+      .scan-reference img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        object-fit: cover;
+      }
+
+      .scan-steps,
+      .posture-chart {
+        display: grid;
+        gap: 12px;
+        margin: 18px 0;
+        text-align: left;
+      }
+
+      .scan-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .posture-chart { grid-template-columns: 1fr 1fr; }
+
+      .scan-steps div,
+      .posture-chart-column {
+        border: 1px solid rgba(165, 180, 252, 0.18);
+        border-radius: 8px;
+        background: rgba(2, 6, 23, 0.26);
+      }
+
+      .scan-steps div { padding: 16px; }
+
+      .scan-steps strong {
+        display: block;
+        margin-bottom: 7px;
+        color: #bfdbfe;
+      }
+
+      .posture-chart-column { overflow: hidden; }
+
+      .posture-chart-column h3 {
+        margin: 0;
+        padding: 14px 16px;
+        background: rgba(59, 130, 246, 0.16);
+        color: #f8fbff;
+      }
+
+      .posture-chart-column.bad h3 { background: rgba(251, 113, 133, 0.16); }
+
+      .posture-chart-column ul {
+        margin: 0;
+        padding: 14px 18px 16px 34px;
+        color: #dbeafe;
+        line-height: 1.55;
+      }
+
+      .hero-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 24px;
+      }
+
+      .hero-header h1 {
+        margin: 2px 0 10px;
+        color: #f8fbff;
+        font-size: clamp(2.2rem, 5vw, 4.7rem);
+        line-height: 0.95;
+      }
+
+      .hero-header p,
+      .privacy-note,
+      .disclaimer {
+        color: #b9c5d8;
+      }
+
+      .privacy-note {
+        width: min(360px, 100%);
+        padding: 16px 18px;
+        border: 1px solid rgba(165, 180, 252, 0.2);
+        border-radius: 8px;
+        background: rgba(15, 23, 42, 0.72);
+      }
+
+      .focus-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      .focus-timer {
+        padding: 12px 16px;
+        border: 1px solid rgba(165, 180, 252, 0.18);
+        border-radius: 8px;
+        background: rgba(15, 23, 42, 0.72);
+        color: #bfdbfe;
+        font-size: 1.5rem;
+        font-weight: 950;
+      }
+
+      .dashboard-grid,
+      .lower-grid {
+        display: grid;
+        gap: 18px;
+      }
+
+      .dashboard-grid { grid-template-columns: minmax(0, 1.55fr) minmax(340px, 0.8fr); }
+      .lower-grid { grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.9fr); margin-top: 18px; }
+
+      .panel-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 20px 22px;
+        border-bottom: 1px solid rgba(165, 180, 252, 0.16);
+      }
+
+      .panel-heading h2 { margin: 3px 0 0; font-size: 1.1rem; }
+
+      .video-shell {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+        background: #172033;
+      }
+
+      video,
+      canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      video {
+        object-fit: contain;
+        transform: scaleX(-1);
+      }
+
+      canvas {
+        transform: scaleX(-1);
+        pointer-events: none;
+      }
+
+      .camera-empty,
+      .countdown {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-content: center;
+        gap: 10px;
+        padding: 28px;
+        color: #d7e2ee;
+        text-align: center;
+      }
+
+      .camera-badge,
+      .camera-error {
+        position: absolute;
+        left: 18px;
+        bottom: 18px;
+        max-width: calc(100% - 36px);
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: rgba(15, 23, 42, 0.92);
+        color: #dbeafe;
+        font-weight: 850;
+      }
+
+      .camera-error { color: #fecdd3; }
+
+      .countdown {
+        background: rgba(18, 27, 43, 0.46);
+        color: #fff;
+        font-size: clamp(5rem, 20vw, 11rem);
+        font-weight: 950;
+      }
+
+      .scan-ring {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: min(56%, 420px);
+        aspect-ratio: 1;
+        border: 2px solid rgba(191, 219, 254, 0.38);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+      }
+
+      .scan-ring::before {
+        content: "";
+        position: absolute;
+        inset: -5px;
+        border-radius: 50%;
+        border: 5px solid transparent;
+        border-top-color: #60a5fa;
+        border-right-color: #a78bfa;
+        animation: scanSpin 1.1s linear infinite;
+      }
+
+      .scan-ring::after {
+        content: "눈 · 코 · 어깨 포인트 확인 중";
+        position: absolute;
+        left: 50%;
+        bottom: -44px;
+        transform: translateX(-50%);
+        width: max-content;
+        padding: 9px 12px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.82);
+        color: #dbeafe;
+        font-weight: 850;
+      }
+
+      @keyframes scanSpin { to { transform: rotate(360deg); } }
+
+      .scan-title-overlay {
+        width: 100%;
+        margin-bottom: 24px;
+        padding: clamp(14px, 2.4vw, 24px) clamp(14px, 4vw, 34px);
+        border: 1px solid rgba(191, 219, 254, 0.34);
+        border-radius: 8px;
+        background: rgba(2, 6, 23, 0.72);
+        color: #f8fbff;
+        text-align: center;
+        font-size: clamp(1.45rem, 3.8vw, 3.2rem);
+        line-height: 1.05;
+        font-weight: 950;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+
+      .status-pill {
+        padding: 8px 11px;
+        border-radius: 999px;
+        background: rgba(148, 163, 184, 0.16);
+        color: #c7d2fe;
+        font-weight: 850;
+      }
+
+      .status-pill.is-on { background: rgba(45, 212, 191, 0.16); color: #99f6e4; }
+
+      .status-panel {
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .status-top { display: flex; align-items: center; gap: 14px; }
+
+      .status-icon {
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        background: rgba(99, 102, 241, 0.24);
+        color: #c7d2fe;
+        font-weight: 950;
+      }
+
+      .status-good { border-color: rgba(45, 212, 191, 0.5); background: rgba(15, 118, 110, 0.18); }
+      .status-bad { border-color: rgba(251, 146, 60, 0.58); background: rgba(124, 45, 18, 0.22); }
+      .status-caution { border-color: rgba(250, 204, 21, 0.68); background: rgba(113, 63, 18, 0.24); }
+
+      .score-block {
+        display: grid;
+        place-items: center;
+        min-height: 180px;
+        border-radius: 8px;
+        background: rgba(2, 6, 23, 0.36);
+        border: 1px solid rgba(165, 180, 252, 0.16);
+      }
+
+      .score-block span {
+        color: #93c5fd;
+        font-size: clamp(4.2rem, 10vw, 7rem);
+        line-height: 0.85;
+        font-weight: 950;
+      }
+
+      .score-block p { margin: 0; color: #b9c5d8; font-weight: 850; }
+      .status-caution .score-block { border-color: rgba(250, 204, 21, 0.5); background: rgba(250, 204, 21, 0.12); }
+      .status-caution .score-block span { color: #facc15; }
+
+      .status-message { margin: 0; min-height: 48px; color: #dbeafe; font-weight: 850; line-height: 1.5; }
+
+      .posture-reasons {
+        display: grid;
+        gap: 8px;
+        padding: 14px;
+        border: 1px solid rgba(165, 180, 252, 0.16);
+        border-radius: 8px;
+        background: rgba(2, 6, 23, 0.26);
+        color: #cbd5e1;
+        line-height: 1.45;
+      }
+
+      .posture-reasons strong { color: #f8fbff; }
+      .posture-reasons ul { margin: 0; padding-left: 18px; }
+
+      .metric-grid,
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .metric,
+      .summary-item {
+        display: grid;
+        gap: 7px;
+        padding: 16px;
+        border: 1px solid rgba(165, 180, 252, 0.16);
+        border-radius: 8px;
+        background: rgba(2, 6, 23, 0.3);
+      }
+
+      .metric span,
+      .summary-item span { color: #b9c5d8; font-size: 0.88rem; font-weight: 850; }
+      .metric strong,
+      .summary-item strong { color: #f8fbff; font-size: 1.25rem; }
+
+      .controls-panel { padding-bottom: 18px; }
+
+      .button-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 18px 22px 0;
+      }
+
+      .button-row button,
+      .icon-toggle {
+        min-height: 42px;
+        padding: 0 15px;
+        border: 1px solid rgba(165, 180, 252, 0.28);
+        border-radius: 8px;
+        background: rgba(15, 23, 42, 0.72);
+        color: #eef4ff;
+        cursor: pointer;
+        font-weight: 850;
+      }
+
+      .button-row button:hover:not(:disabled),
+      .icon-toggle:hover {
+        border-color: #93c5fd;
+        color: #bfdbfe;
+      }
+
+      .button-row button:disabled { cursor: not-allowed; opacity: 0.45; }
+
+      .summary-grid { padding: 18px 22px 22px; }
+      .disclaimer { margin-top: 18px; padding: 18px 20px; line-height: 1.5; }
+
+      .popup {
+        position: fixed;
+        inset: 0;
+        z-index: 30;
+        display: grid;
+        place-items: center;
+        padding: 22px;
+        background: rgba(2, 6, 23, 0.66);
+        backdrop-filter: blur(8px);
+      }
+
+      .popup-card {
+        width: min(480px, 100%);
+        padding: 26px;
+        border: 1px solid rgba(165, 180, 252, 0.22);
+        border-radius: 8px;
+        background: #101827;
+        box-shadow: 0 24px 80px rgba(15, 23, 42, 0.24);
+      }
+
+      .popup-card h2 { margin: 0 0 10px; color: #f8fbff; }
+      .popup-card p { margin: 0 0 20px; color: #cbd5e1; line-height: 1.6; }
+      .popup-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+      .toast {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        z-index: 20;
+        width: min(420px, calc(100vw - 48px));
+        padding: 16px 18px;
+        border: 1px solid rgba(251, 146, 60, 0.52);
+        border-radius: 8px;
+        background: rgba(30, 41, 59, 0.96);
+        color: #fed7aa;
+        font-weight: 850;
+      }
+
+      .final-gallery {
+        position: relative;
+        width: min(620px, 100%);
+        aspect-ratio: 4 / 3;
+        margin: 22px auto;
+        overflow: hidden;
+        border-radius: 8px;
+        border: 1px solid rgba(165, 180, 252, 0.18);
+      }
+
+      .final-gallery img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      @media (max-width: 1080px) {
+        .dashboard-grid,
+        .lower-grid,
+        .scan-steps,
+        .posture-chart { grid-template-columns: 1fr; }
+        .hero-header { align-items: stretch; flex-direction: column; }
+      }
+
+      @media (max-width: 720px) {
+        .app-shell { padding: 18px; }
+        .metric-grid,
+        .summary-grid { grid-template-columns: 1fr; }
+        .button-row { display: grid; }
+        .scan-title-overlay { font-size: clamp(1.2rem, 5vw, 1.9rem); }
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" onerror="window.__postureLibraryError = true"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <section id="welcomeView" class="wizard-view">
+        <div class="panel wizard-card">
+          <p class="eyebrow">Posture Reminder</p>
+          <h1>안녕하세요</h1>
+          <p>집중하는 동안 웹캠으로 자세 변화를 지켜보고, 흐트러질 때 부드럽게 알려드릴게요.</p>
+          <button id="goTimeSetup" class="primary-action" type="button">시작하기</button>
+        </div>
+      </section>
+
+      <section id="timeView" class="wizard-view hidden">
+        <div class="panel wizard-card">
+          <p class="eyebrow">Focus Time</p>
+          <h2>집중 시간 설정</h2>
+          <p>집중할 시간을 입력하세요. 분이나 초에 60 이상을 넣으면 자동으로 상위 단위로 바뀝니다.</p>
+          <div class="time-picker">
+            <div class="time-segments" aria-label="집중 시간 입력">
+              <input id="focusHours" type="number" min="0" step="1" value="0" aria-label="집중 시간 시" />
+              <span class="time-separator">/</span>
+              <input id="focusMinutes" type="number" min="0" step="1" value="25" aria-label="집중 시간 분" />
+              <span class="time-separator">/</span>
+              <input id="focusSeconds" type="number" min="0" step="1" value="0" aria-label="집중 시간 초" />
+            </div>
+            <div class="time-labels"><span>시</span><span>분</span><span>초</span></div>
+            <div id="focusTimeDisplay" class="time-display">00:25:00</div>
+          </div>
+          <button id="goCalibration" class="primary-action" type="button">다음</button>
+        </div>
+      </section>
+
+      <section id="alertDelayView" class="wizard-view hidden">
+        <div class="panel wizard-card">
+          <p class="eyebrow">Correction Time</p>
+          <h2>자세 교정 시간 설정</h2>
+          <p>자세가 이 시간 이상 흐트러지면 알림을 띄우고, 다시 좋아질 때도 이 시간 동안 70점 이상 유지되어야 회복 처리됩니다.</p>
+          <div class="time-picker">
+            <div class="time-segments" aria-label="자세 교정 시간 입력">
+              <input id="alertHours" type="number" min="0" step="1" value="0" aria-label="자세 교정 기준 시" />
+              <span class="time-separator">/</span>
+              <input id="alertMinutes" type="number" min="0" step="1" value="0" aria-label="자세 교정 기준 분" />
+              <span class="time-separator">/</span>
+              <input id="alertSeconds" type="number" min="0" step="1" value="10" aria-label="자세 교정 기준 초" />
+            </div>
+            <div class="time-labels"><span>시</span><span>분</span><span>초</span></div>
+            <div id="alertDelayDisplay" class="time-display">00:00:10</div>
+          </div>
+          <button id="goScanSetup" class="primary-action" type="button">다음</button>
+        </div>
+      </section>
+
+      <section id="calibrationView" class="wizard-view hidden">
+        <div class="panel wizard-card">
+          <p class="eyebrow">Posture Scan</p>
+          <h2>자세 스캐닝을 시작하겠습니다!</h2>
+          <p>최대한 바른 자세로 앉아 카메라를 봐주세요. 아래 순서대로 자세를 잡은 뒤 스캔을 시작하면 됩니다.</p>
+          <div class="scan-reference">
+            <img src="/assets/scan-guide-Cvlk97Wx.jpg" alt="좋은 자세와 나쁜 자세 비교 참고 이미지" />
+          </div>
+          <div class="scan-steps" aria-label="스캔 자세 3단계">
+            <div><strong>1. 허리 세우기</strong><span>허리를 세우고 등받이에 가볍게 기대주세요.</span></div>
+            <div><strong>2. 어깨 내리기</strong><span>어깨 힘을 빼고 양쪽 어깨가 카메라에 보이게 해주세요.</span></div>
+            <div><strong>3. 화면 정면 보기</strong><span>고개가 앞으로 빠지지 않게 하고 카메라를 편하게 바라봐주세요.</span></div>
+          </div>
+          <div class="posture-chart" aria-label="Good Bad 자세 차트">
+            <div class="posture-chart-column">
+              <h3>Good example</h3>
+              <ul>
+                <li>머리와 목: 귀가 어깨 위에 가까움</li>
+                <li>어깨와 등: 어깨가 말리지 않고 허리가 세워짐</li>
+                <li>팔과 손목: 팔꿈치가 몸 가까이에 있고 손목이 편안함</li>
+                <li>화면 위치: 화면 상단이 눈높이와 비슷하거나 살짝 아래</li>
+              </ul>
+            </div>
+            <div class="posture-chart-column bad">
+              <h3>Bad example</h3>
+              <ul>
+                <li>머리와 목: 고개가 앞으로 빠지거나 아래로 숙여짐</li>
+                <li>어깨와 등: 어깨가 둥글게 말리고 상체가 구부러짐</li>
+                <li>팔과 손목: 팔이 멀리 뻗거나 손목이 과하게 꺾임</li>
+                <li>화면 위치: 화면이 너무 낮거나 몸이 화면에 너무 가까움</li>
+              </ul>
+            </div>
+          </div>
+          <button id="beginCalibrationFlow" class="primary-action" type="button">카메라 켜고 5초 스캔</button>
+        </div>
+      </section>
+
+      <section id="cameraScanView" class="focus-view hidden">
+        <div class="scan-title-overlay">유저의 자세를 스캔 중입니다.</div>
+        <section class="panel camera-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Scanning</p>
+              <h2>자세 스캔</h2>
+            </div>
+            <span id="scanCameraPill" class="status-pill">스캔 준비</span>
+          </div>
+          <div class="video-shell" id="scanVideoShell"></div>
+        </section>
+      </section>
+
+      <section id="scanCompleteView" class="wizard-view hidden">
+        <div class="panel wizard-card">
+          <p class="eyebrow">Scan Complete</p>
+          <h2>스캔이 완료되었어요!</h2>
+          <p>방금 5초 동안 저장한 자세를 기준으로 볼게요. 정답 자세를 진단하는 것이 아니라, 지금 기준에서 얼마나 벗어나는지만 확인합니다.</p>
+          <button id="startFocusAfterScan" class="primary-action" type="button">집중하기</button>
+        </div>
+      </section>
+
+      <section id="focusView" class="focus-view hidden">
+        <header class="hero-header">
+          <div>
+            <p class="eyebrow">Focus Companion</p>
+            <h1>이제 집중하세요!</h1>
+            <p>웹캠으로 공부 중 자세 변화를 감지하고, 자세가 무너지면 알려드려요.</p>
+          </div>
+          <div class="privacy-note">
+            <strong>개인정보 보호</strong>
+            <span>영상과 포즈 데이터는 현재 브라우저에서만 처리됩니다.</span>
+          </div>
+        </header>
+
+        <div class="focus-topline">
+          <p class="eyebrow">Remaining Focus Time</p>
+          <div id="remainingTime" class="focus-timer">00:25:00</div>
+        </div>
+
+        <section class="dashboard-grid">
+          <section class="panel camera-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Live Camera</p>
+                <h2>카메라 화면</h2>
+              </div>
+              <span id="cameraPill" class="status-pill">카메라 꺼짐</span>
+            </div>
+            <div class="video-shell" id="focusVideoShell">
+              <video id="video" playsinline muted></video>
+              <canvas id="overlay"></canvas>
+              <div id="cameraEmpty" class="camera-empty">
+                <strong>카메라를 허용해주세요</strong>
+                <span>영상은 브라우저 안에서만 처리됩니다.</span>
+              </div>
+              <div id="cameraBadge" class="camera-badge hidden">포즈 모델을 불러오는 중...</div>
+              <div id="cameraError" class="camera-error hidden"></div>
+              <div id="scanRing" class="scan-ring hidden"></div>
+              <div id="countdown" class="countdown hidden">5</div>
+            </div>
+          </section>
+
+          <section id="statusPanel" class="panel status-panel">
+            <div class="status-top">
+              <div id="statusIcon" class="status-icon">OK</div>
+              <div>
+                <p class="eyebrow">Current Status</p>
+                <h2 id="statusLabel">대기 중</h2>
+              </div>
+            </div>
+            <div class="score-block">
+              <span id="score">0</span>
+              <p>자세 안정도</p>
+            </div>
+            <p id="statusMessage" class="status-message">바른 자세를 기준으로 저장해볼까요?</p>
+            <div class="posture-reasons">
+              <strong>문제 기준: 70점 미만</strong>
+              <div id="liveReasonText">아직 감지된 자세 문제가 없어요.</div>
+            </div>
+            <div class="metric-grid">
+              <div class="metric"><span>세션 시간</span><strong id="sessionTime">00:00</strong></div>
+              <div class="metric"><span>무너짐 횟수</span><strong id="badCount">0</strong></div>
+            </div>
+          </section>
+        </section>
+
+        <section class="lower-grid">
+          <section class="panel controls-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Controls</p>
+                <h2>작업 흐름</h2>
+              </div>
+            </div>
+            <div class="button-row">
+              <button id="recalibrate" type="button" disabled>자세 다시 스캔하기</button>
+              <button id="editFocusTime" type="button">집중 시간 다시 설정하기</button>
+              <button id="editAlertTime" type="button">자세 교정 시간 다시 설정하기</button>
+              <button id="finishFromControls" type="button">집중 끝내기</button>
+              <button id="restartFromControls" type="button">처음부터 다시 시작하기</button>
+            </div>
+          </section>
+
+          <section class="panel stats-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Daily Summary</p>
+                <h2>오늘의 자세 리포트</h2>
+              </div>
+            </div>
+            <div class="summary-grid">
+              <div class="summary-item"><span>총 작업 시간</span><strong id="totalTime">00:00</strong></div>
+              <div class="summary-item"><span>좋은 자세 유지</span><strong id="goodTime">00:00</strong></div>
+              <div class="summary-item"><span>자세 유지 비율</span><strong id="goodRatio">0%</strong></div>
+              <div class="summary-item"><span>자세 무너짐 횟수</span><strong id="summaryBadCount">0회</strong></div>
+            </div>
+          </section>
+        </section>
+
+        <section class="disclaimer panel">
+          <strong>의학적 진단이 아니에요.</strong>
+          <span>Posture Reminder는 거북목이나 질환을 판단하지 않고, 자세 스캔으로 저장한 기준 자세와의 상대적인 변화를 알려주는 습관 리마인더입니다.</span>
+        </section>
+      </section>
+
+      <div id="posturePopup" class="popup hidden">
+        <div class="popup-card">
+          <h2>자세가 흐트러지고 있어요</h2>
+          <p id="popupMessage">잠깐 자세를 리셋해보세요.</p>
+          <div class="popup-actions">
+            <button id="resetPopup" class="primary-action" type="button">다시 고쳤어요</button>
+            <button id="ignorePopup" class="icon-toggle" type="button">무시하고 계속</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="finishPopup" class="popup hidden">
+        <div class="popup-card">
+          <h2>집중 시간이 끝났어요</h2>
+          <p>잠깐 목과 어깨를 풀어볼까요? 계속 집중하려면 다시 시작할 수 있어요.</p>
+          <div class="popup-actions">
+            <button id="continueFocus" class="primary-action" type="button">계속 집중</button>
+            <button id="finishFocus" class="icon-toggle" type="button">마무리</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="stretchPopup" class="popup hidden">
+        <div class="popup-card">
+          <h2>스트레칭을 하는 게 좋지 않겠어요?</h2>
+          <p>잠깐 목과 어깨를 풀고 오면 다음 집중이 훨씬 편해질 수 있어요.</p>
+          <div class="popup-actions">
+            <button id="stretchYes" class="primary-action" type="button">예, 스트레칭 보기</button>
+            <button id="stretchNo" class="icon-toggle" type="button">아니오, 계속 공부할래요</button>
+          </div>
+        </div>
+      </div>
+
+      <section id="finalView" class="wizard-view hidden">
+        <div class="panel wizard-card">
+          <p class="eyebrow">Finished</p>
+          <h2>오늘도 고생했어요!</h2>
+          <p>다음 시간까지 화이팅!</p>
+          <div class="final-gallery">
+            <img src="/assets/finish-message-CVlVS7nB.jpg" alt="몸 관리 잘해서 오래오래 합시다" />
+          </div>
+          <button id="restartApp" class="primary-action" type="button">다시 시작하기</button>
+        </div>
+      </section>
+
+      <div id="toast" class="toast hidden"></div>
+    </main>
+
+    <script>
+      const postureSettings = {
+        headDrop: 0.12,
+        faceToShoulderChange: 0.15,
+        shoulderWidthIncrease: 0.12,
+        shoulderWidthDecrease: 0.12,
+        shoulderTilt: 0.06,
+        headOffset: 0.1,
+        badScoreThreshold: 70,
+      };
+
+      const notificationCooldownMs = 30000;
+      const els = {
+        welcomeView: document.getElementById("welcomeView"),
+        timeView: document.getElementById("timeView"),
+        alertDelayView: document.getElementById("alertDelayView"),
+        calibrationView: document.getElementById("calibrationView"),
+        cameraScanView: document.getElementById("cameraScanView"),
+        scanCompleteView: document.getElementById("scanCompleteView"),
+        focusView: document.getElementById("focusView"),
+        finalView: document.getElementById("finalView"),
+        goTimeSetup: document.getElementById("goTimeSetup"),
+        goCalibration: document.getElementById("goCalibration"),
+        goScanSetup: document.getElementById("goScanSetup"),
+        beginCalibrationFlow: document.getElementById("beginCalibrationFlow"),
+        startFocusAfterScan: document.getElementById("startFocusAfterScan"),
+        focusHours: document.getElementById("focusHours"),
+        focusMinutes: document.getElementById("focusMinutes"),
+        focusSeconds: document.getElementById("focusSeconds"),
+        focusTimeDisplay: document.getElementById("focusTimeDisplay"),
+        alertHours: document.getElementById("alertHours"),
+        alertMinutes: document.getElementById("alertMinutes"),
+        alertSeconds: document.getElementById("alertSeconds"),
+        alertDelayDisplay: document.getElementById("alertDelayDisplay"),
+        remainingTime: document.getElementById("remainingTime"),
+        video: document.getElementById("video"),
+        overlay: document.getElementById("overlay"),
+        scanVideoShell: document.getElementById("scanVideoShell"),
+        focusVideoShell: document.getElementById("focusVideoShell"),
+        cameraEmpty: document.getElementById("cameraEmpty"),
+        cameraBadge: document.getElementById("cameraBadge"),
+        cameraError: document.getElementById("cameraError"),
+        scanRing: document.getElementById("scanRing"),
+        countdown: document.getElementById("countdown"),
+        cameraPill: document.getElementById("cameraPill"),
+        scanCameraPill: document.getElementById("scanCameraPill"),
+        statusPanel: document.getElementById("statusPanel"),
+        statusIcon: document.getElementById("statusIcon"),
+        statusLabel: document.getElementById("statusLabel"),
+        statusMessage: document.getElementById("statusMessage"),
+        score: document.getElementById("score"),
+        liveReasonText: document.getElementById("liveReasonText"),
+        sessionTime: document.getElementById("sessionTime"),
+        badCount: document.getElementById("badCount"),
+        totalTime: document.getElementById("totalTime"),
+        goodTime: document.getElementById("goodTime"),
+        goodRatio: document.getElementById("goodRatio"),
+        summaryBadCount: document.getElementById("summaryBadCount"),
+        recalibrate: document.getElementById("recalibrate"),
+        editFocusTime: document.getElementById("editFocusTime"),
+        editAlertTime: document.getElementById("editAlertTime"),
+        finishFromControls: document.getElementById("finishFromControls"),
+        restartFromControls: document.getElementById("restartFromControls"),
+        posturePopup: document.getElementById("posturePopup"),
+        popupMessage: document.getElementById("popupMessage"),
+        resetPopup: document.getElementById("resetPopup"),
+        ignorePopup: document.getElementById("ignorePopup"),
+        finishPopup: document.getElementById("finishPopup"),
+        continueFocus: document.getElementById("continueFocus"),
+        finishFocus: document.getElementById("finishFocus"),
+        stretchPopup: document.getElementById("stretchPopup"),
+        stretchYes: document.getElementById("stretchYes"),
+        stretchNo: document.getElementById("stretchNo"),
+        restartApp: document.getElementById("restartApp"),
+        toast: document.getElementById("toast"),
+      };
+
+      const state = {
+        status: "idle",
+        pose: null,
+        baseline: null,
+        isCameraOn: false,
+        isWorking: false,
+        totalWorkingTime: 0,
+        goodPostureTime: 0,
+        badPostureTime: 0,
+        badPostureCount: 0,
+        badCandidateStartedAt: null,
+        goodCandidateStartedAt: null,
+        lastNotificationAt: 0,
+        lastTickAt: Date.now(),
+        poseEngine: null,
+        poseLoopRunning: false,
+        focusDurationMs: 25 * 60 * 1000,
+        focusRemainingMs: 25 * 60 * 1000,
+        focusFinished: false,
+        alertDelayMs: 10 * 1000,
+        reuseBaselineNextSession: false,
+        returnToFocusAfterTimeEdit: false,
+      };
+
+      function formatClock(milliseconds) {
+        const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      }
+
+      function formatDuration(milliseconds) {
+        const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      }
+
+      function readTimeSegments(hoursEl, minutesEl, secondsEl) {
+        const read = (element) => {
+          const value = Number.parseInt(element.value, 10);
+          if (Number.isNaN(value)) return 0;
+          return Math.max(0, value);
+        };
+        return ((read(hoursEl) * 60 + read(minutesEl)) * 60 + read(secondsEl)) * 1000;
+      }
+
+      function normalizeTimeInputs(hoursEl, minutesEl, secondsEl) {
+        const totalSeconds = Math.floor(readTimeSegments(hoursEl, minutesEl, secondsEl) / 1000);
+        const hours = Math.min(99, Math.floor(totalSeconds / 3600));
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        hoursEl.value = String(hours);
+        minutesEl.value = String(minutes);
+        secondsEl.value = String(seconds);
+      }
+
+      function updateFocusDuration() {
+        state.focusDurationMs = readTimeSegments(els.focusHours, els.focusMinutes, els.focusSeconds);
+        state.focusRemainingMs = state.focusDurationMs;
+        els.focusTimeDisplay.textContent = formatClock(state.focusDurationMs);
+        els.remainingTime.textContent = formatClock(state.focusRemainingMs);
+      }
+
+      function updateAlertDelay() {
+        state.alertDelayMs = Math.max(1000, readTimeSegments(els.alertHours, els.alertMinutes, els.alertSeconds));
+        els.alertDelayDisplay.textContent = formatClock(state.alertDelayMs);
+      }
+
+      function showView(viewName) {
+        [els.welcomeView, els.timeView, els.alertDelayView, els.calibrationView, els.cameraScanView, els.scanCompleteView, els.focusView, els.finalView].forEach((view) => view.classList.add("hidden"));
+        els[viewName].classList.remove("hidden");
+      }
+
+      function moveCameraTo(targetShell) {
+        [els.video, els.overlay, els.cameraEmpty, els.cameraBadge, els.cameraError, els.scanRing, els.countdown].forEach((element) => {
+          if (element && element.parentElement !== targetShell) targetShell.appendChild(element);
+        });
+      }
+
+      async function requestNotificationPermission() {
+        if (!("Notification" in window)) return;
+        if (Notification.permission === "default") {
+          try { await Notification.requestPermission(); } catch {}
+        }
+      }
+
+      function notifyOutsideTab(title, body) {
+        if ("Notification" in window && Notification.permission === "granted") new Notification(title, { body });
+      }
+
+      function setStatus(status, message) {
+        state.status = status;
+        const labels = {
+          idle: "대기 중",
+          camera_ready: "대기 중",
+          calibrating: "자세 스캔 중",
+          calibrated: "대기 중",
+          working_good: "좋은 자세 유지 중",
+          working_bad: "자세가 무너졌어요",
+          finished: "작업 종료",
+        };
+        els.statusLabel.textContent = labels[status] || "대기 중";
+        if (message) els.statusMessage.textContent = message;
+        els.statusPanel.classList.toggle("status-good", status === "working_good");
+        els.statusPanel.classList.toggle("status-bad", status === "working_bad");
+        els.statusPanel.classList.remove("status-caution");
+        els.statusIcon.textContent = status === "working_bad" ? "!" : "OK";
+        updateButtons();
+      }
+
+      function updateScoreWarning(score) {
+        const isCaution = state.isWorking && score > 0 && score < postureSettings.badScoreThreshold;
+        els.statusPanel.classList.toggle("status-caution", isCaution);
+        if (isCaution) {
+          els.statusLabel.textContent = "주의 상태";
+          els.statusMessage.textContent = "주의: 자세가 흐트러지고 있어요.";
+          els.statusIcon.textContent = "!";
+        }
+      }
+
+      function updateButtons() {
+        els.recalibrate.disabled = !state.isCameraOn || state.status === "calibrating";
+      }
+
+      function updateStats() {
+        els.sessionTime.textContent = formatDuration(state.totalWorkingTime);
+        els.totalTime.textContent = formatDuration(state.totalWorkingTime);
+        els.goodTime.textContent = formatDuration(state.goodPostureTime);
+        els.badCount.textContent = String(state.badPostureCount);
+        els.summaryBadCount.textContent = `${state.badPostureCount}회`;
+        const ratio = state.totalWorkingTime ? Math.round((state.goodPostureTime / state.totalWorkingTime) * 100) : 0;
+        els.goodRatio.textContent = `${ratio}%`;
+      }
+
+      function showToast(message) {
+        const now = Date.now();
+        if (now - state.lastNotificationAt < notificationCooldownMs) return;
+        state.lastNotificationAt = now;
+        els.toast.textContent = message;
+        els.toast.classList.remove("hidden");
+        showPosturePopup(message);
+        notifyOutsideTab("Posture Reminder", message);
+        window.setTimeout(() => els.toast.classList.add("hidden"), 4200);
+      }
+
+      function showPosturePopup(message) {
+        els.popupMessage.textContent = message;
+        els.posturePopup.classList.remove("hidden");
+      }
+
+      function hidePosturePopup() { els.posturePopup.classList.add("hidden"); }
+      function showFinishPopup() { els.finishPopup.classList.remove("hidden"); notifyOutsideTab("집중 시간이 끝났어요", "잠깐 목과 어깨를 풀어볼까요?"); }
+      function hideFinishPopup() { els.finishPopup.classList.add("hidden"); }
+      function showStretchPopup() { els.stretchPopup.classList.remove("hidden"); }
+      function hideStretchPopup() { els.stretchPopup.classList.add("hidden"); }
+
+      function resetAppToStart() {
+        state.isWorking = false;
+        state.baseline = null;
+        state.badCandidateStartedAt = null;
+        state.goodCandidateStartedAt = null;
+        state.badPostureCount = 0;
+        state.totalWorkingTime = 0;
+        state.goodPostureTime = 0;
+        state.badPostureTime = 0;
+        state.focusFinished = false;
+        state.reuseBaselineNextSession = false;
+        state.returnToFocusAfterTimeEdit = false;
+        state.focusRemainingMs = state.focusDurationMs;
+        hidePosturePopup();
+        hideFinishPopup();
+        hideStretchPopup();
+        updateStats();
+        updateFocusDuration();
+        updateAlertDelay();
+        setStatus(state.isCameraOn ? "camera_ready" : "idle", "바른 자세를 기준으로 저장해볼까요?");
+        showView("welcomeView");
+      }
+
+      function toPose(landmarks) {
+        if (!landmarks) return null;
+        const width = els.overlay.width;
+        const height = els.overlay.height;
+        const point = (index) => ({ x: landmarks[index].x * width, y: landmarks[index].y * height, score: landmarks[index].visibility || 1 });
+        const nose = point(0);
+        const leftEar = point(7);
+        const rightEar = point(8);
+        const leftShoulder = point(11);
+        const rightShoulder = point(12);
+        const faceCenter = { x: (nose.x + leftEar.x + rightEar.x) / 3, y: (nose.y + leftEar.y + rightEar.y) / 3 };
+        const shoulderCenter = { x: (leftShoulder.x + rightShoulder.x) / 2, y: (leftShoulder.y + rightShoulder.y) / 2 };
+        const shoulderWidth = Math.hypot(leftShoulder.x - rightShoulder.x, leftShoulder.y - rightShoulder.y);
+        return {
+          faceCenterX: faceCenter.x,
+          faceCenterY: faceCenter.y,
+          shoulderCenterX: shoulderCenter.x,
+          shoulderCenterY: shoulderCenter.y,
+          shoulderWidth,
+          faceToShoulderDistance: Math.hypot(faceCenter.x - shoulderCenter.x, faceCenter.y - shoulderCenter.y),
+          shoulderTilt: Math.abs(leftShoulder.y - rightShoulder.y),
+          headOffsetFromShoulderCenter: faceCenter.x - shoulderCenter.x,
+          points: { nose, leftEar, rightEar, leftShoulder, rightShoulder },
+        };
+      }
+
+      function averagePose(samples) {
+        if (!samples.length) return null;
+        const sum = samples.reduce((acc, sample) => {
+          for (const key of ["faceCenterX", "faceCenterY", "shoulderCenterX", "shoulderCenterY", "shoulderWidth", "faceToShoulderDistance", "shoulderTilt", "headOffsetFromShoulderCenter"]) {
+            acc[key] += sample[key];
+          }
+          return acc;
+        }, { faceCenterX: 0, faceCenterY: 0, shoulderCenterX: 0, shoulderCenterY: 0, shoulderWidth: 0, faceToShoulderDistance: 0, shoulderTilt: 0, headOffsetFromShoulderCenter: 0 });
+        const count = samples.length;
+        Object.keys(sum).forEach((key) => { sum[key] /= count; });
+        return sum;
+      }
+
+      function evaluatePosture(current, baseline) {
+        if (!current || !baseline) return { isBad: false, score: 0, reasons: [] };
+        const scale = Math.max(baseline.shoulderWidth, 1);
+        const headDropRatio = (current.faceCenterY - baseline.faceCenterY) / scale;
+        const distanceChangeRatio = Math.abs(current.faceToShoulderDistance - baseline.faceToShoulderDistance) / Math.max(baseline.faceToShoulderDistance, 1);
+        const shoulderWidthChangeRatio = (current.shoulderWidth - baseline.shoulderWidth) / Math.max(baseline.shoulderWidth, 1);
+        const shoulderTiltChange = Math.abs(current.shoulderTilt - baseline.shoulderTilt) / scale;
+        const headOffsetChange = Math.abs(current.headOffsetFromShoulderCenter - baseline.headOffsetFromShoulderCenter) / scale;
+        const bodySideShiftRatio = Math.abs(current.shoulderCenterX - baseline.shoulderCenterX) / scale;
+        let score = 100;
+        const reasons = [];
+        if (headDropRatio > postureSettings.headDrop) { score -= 25; reasons.push("face_down"); }
+        if (distanceChangeRatio > postureSettings.faceToShoulderChange) { score -= 25; reasons.push("distance_changed"); }
+        if (shoulderWidthChangeRatio > postureSettings.shoulderWidthIncrease) { score -= 20; reasons.push("closer_to_camera"); }
+        if (shoulderWidthChangeRatio < -postureSettings.shoulderWidthDecrease) { score -= 12; reasons.push("farther_from_camera"); }
+        if (shoulderTiltChange > postureSettings.shoulderTilt) { score -= 15; reasons.push("shoulder_tilt"); }
+        if (headOffsetChange > postureSettings.headOffset) { score -= 15; reasons.push("head_shift"); }
+        if (bodySideShiftRatio > 0.18) { score -= 18; reasons.push("side_shift"); }
+        score = Math.max(0, Math.min(100, Math.round(score)));
+        return { isBad: score < postureSettings.badScoreThreshold, score, reasons };
+      }
+
+      const reasonCopy = {
+        closer_to_camera: { title: "화면과 너무 가까워졌어요.", detail: "상체를 살짝 뒤로 빼고 등을 등받이에 기대보세요." },
+        farther_from_camera: { title: "몸이 기준보다 뒤로 빠진 것 같아요.", detail: "허리를 세우고 화면을 편하게 바라봐주세요." },
+        face_down: { title: "고개가 기준보다 아래로 내려갔어요.", detail: "화면을 눈높이에 맞추고 턱을 살짝 들어보세요." },
+        distance_changed: { title: "얼굴과 어깨의 정렬이 달라졌어요.", detail: "귀가 어깨 위에 오도록 자세를 리셋해보세요." },
+        shoulder_tilt: { title: "어깨 균형이 기울어졌어요.", detail: "양쪽 어깨 힘을 빼고 수평에 가깝게 맞춰보세요." },
+        head_shift: { title: "고개가 어깨 중심에서 벗어났어요.", detail: "몸을 비틀지 말고 화면 정면을 바라봐주세요." },
+        side_shift: { title: "몸이 기준보다 옆으로 치우쳤어요.", detail: "의자에 앉은 몸을 가운데로 정렬하고 화면 정면을 바라봐주세요." },
+      };
+
+      function topReasons(reasons, limit = 2) {
+        const priority = ["closer_to_camera", "face_down", "side_shift", "distance_changed", "shoulder_tilt", "head_shift", "farther_from_camera"];
+        return priority.filter((reason) => reasons.includes(reason)).slice(0, limit);
+      }
+
+      function messageFor(reasons) {
+        const main = topReasons(reasons, 1)[0];
+        if (!main) return "잠깐 자세를 리셋해보세요.";
+        return `${reasonCopy[main].title} ${reasonCopy[main].detail}`;
+      }
+
+      function updateLiveReasons(evaluation) {
+        if (!evaluation?.reasons?.length) {
+          els.liveReasonText.textContent = "아직 감지된 자세 문제가 없어요.";
+          return;
+        }
+        els.liveReasonText.innerHTML = `<ul>${topReasons(evaluation.reasons, 2).map((reason) => `<li><strong>${reasonCopy[reason].title}</strong> ${reasonCopy[reason].detail}</li>`).join("")}</ul>`;
+      }
+
+      function drawPose(pose) {
+        const ctx = els.overlay.getContext("2d");
+        ctx.clearRect(0, 0, els.overlay.width, els.overlay.height);
+        if (!pose) return;
+        ctx.strokeStyle = "rgba(45, 212, 191, 0.8)";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(pose.points.leftShoulder.x, pose.points.leftShoulder.y);
+        ctx.lineTo(pose.points.rightShoulder.x, pose.points.rightShoulder.y);
+        ctx.stroke();
+        Object.values(pose.points).forEach((point) => {
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, 7, 0, Math.PI * 2);
+          ctx.fillStyle = "#2dd4bf";
+          ctx.fill();
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = "#fff";
+          ctx.stroke();
+        });
+      }
+
+      function onPoseResults(results) {
+        if (els.video.videoWidth && els.video.videoHeight) {
+          els.overlay.width = els.video.videoWidth;
+          els.overlay.height = els.video.videoHeight;
+        }
+        state.pose = toPose(results.poseLandmarks);
+        drawPose(state.pose);
+        const evaluation = evaluatePosture(state.pose, state.baseline);
+        els.score.textContent = String(evaluation.score || 0);
+        updateScoreWarning(evaluation.score || 0);
+        updateLiveReasons(evaluation);
+        if (!state.isWorking) return;
+
+        const now = Date.now();
+        const holdDuration = state.alertDelayMs;
+        if (evaluation.isBad) {
+          state.goodCandidateStartedAt = null;
+          if (!state.badCandidateStartedAt) state.badCandidateStartedAt = now;
+          if (now - state.badCandidateStartedAt >= holdDuration && state.status !== "working_bad") {
+            state.badPostureCount += 1;
+            setStatus("working_bad", messageFor(evaluation.reasons));
+            showToast(messageFor(evaluation.reasons));
+          } else if (state.status === "working_bad") {
+            showToast(messageFor(evaluation.reasons));
+          }
+        } else {
+          state.badCandidateStartedAt = null;
+          if (state.status === "working_bad") {
+            if (!state.goodCandidateStartedAt) state.goodCandidateStartedAt = now;
+            if (now - state.goodCandidateStartedAt >= holdDuration) {
+              setStatus("working_good", "좋아요. 현재 자세가 안정적이에요.");
+              hidePosturePopup();
+              state.goodCandidateStartedAt = null;
+            }
+          } else {
+            state.goodCandidateStartedAt = null;
+          }
+        }
+      }
+
+      async function startCamera() {
+        els.cameraError.classList.add("hidden");
+        if (!navigator.mediaDevices?.getUserMedia) {
+          els.cameraError.textContent = "이 브라우저에서 카메라 API를 사용할 수 없어요. localhost 또는 HTTPS 주소로 열어주세요.";
+          els.cameraError.classList.remove("hidden");
+          return;
+        }
+        els.cameraBadge.classList.remove("hidden");
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }, audio: false });
+          els.video.srcObject = stream;
+          await els.video.play();
+          state.isCameraOn = true;
+          els.cameraEmpty.classList.add("hidden");
+          els.cameraPill.textContent = "카메라 켜짐";
+          els.cameraPill.classList.add("is-on");
+          els.scanCameraPill.textContent = "카메라 켜짐";
+          els.scanCameraPill.classList.add("is-on");
+          setStatus("camera_ready", "바른 자세를 기준으로 저장해볼까요?");
+          if (window.__postureLibraryError || !window.Pose) {
+            els.cameraError.textContent = "카메라는 켜졌지만 포즈 추정 라이브러리를 불러오지 못했어요. 인터넷 연결 후 새로고침하면 추적 포인트가 표시됩니다.";
+            els.cameraError.classList.remove("hidden");
+            return;
+          }
+          const pose = new Pose({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}` });
+          pose.setOptions({ modelComplexity: 0, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+          pose.onResults(onPoseResults);
+          state.poseEngine = pose;
+          state.poseLoopRunning = true;
+          requestAnimationFrame(sendPoseFrame);
+        } catch (error) {
+          const message = error?.message ? ` (${error.message})` : "";
+          els.cameraError.textContent = `카메라를 시작하지 못했어요. 브라우저 권한이나 다른 앱의 카메라 사용 여부를 확인해주세요.${message}`;
+          els.cameraError.classList.remove("hidden");
+        } finally {
+          els.cameraBadge.classList.add("hidden");
+          updateButtons();
+        }
+      }
+
+      async function sendPoseFrame() {
+        if (!state.poseLoopRunning || !state.poseEngine || !state.isCameraOn) return;
+        if (els.video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+          try {
+            await state.poseEngine.send({ image: els.video });
+          } catch {
+            els.cameraError.textContent = "포즈 추적 중 오류가 났어요. 새로고침 후 다시 시도해주세요.";
+            els.cameraError.classList.remove("hidden");
+            state.poseLoopRunning = false;
+            return;
+          }
+        }
+        requestAnimationFrame(sendPoseFrame);
+      }
+
+      async function calibrate() {
+        if (!state.isCameraOn) return;
+        const samples = [];
+        state.isWorking = false;
+        state.badCandidateStartedAt = null;
+        state.goodCandidateStartedAt = null;
+        hidePosturePopup();
+        els.scanRing.classList.remove("hidden");
+        setStatus("calibrating", "최대한 바른 자세로 앉아 카메라를 봐주세요. 5초 동안 눈, 코, 어깨 포인트를 보며 자세를 스캔할게요.");
+        for (let second = 5; second >= 1; second -= 1) {
+          els.countdown.textContent = String(second);
+          els.countdown.classList.remove("hidden");
+          const startedAt = Date.now();
+          while (Date.now() - startedAt < 1000) {
+            if (state.pose) samples.push(state.pose);
+            await new Promise((resolve) => setTimeout(resolve, 120));
+          }
+        }
+        els.countdown.classList.add("hidden");
+        els.scanRing.classList.add("hidden");
+        state.baseline = averagePose(samples);
+        if (state.baseline) {
+          setStatus("calibrated", "자세 스캔이 완료되었습니다.");
+          showView("scanCompleteView");
+        } else {
+          setStatus("camera_ready", "얼굴과 어깨가 잘 보이도록 앉은 뒤 다시 시도해주세요.");
+        }
+      }
+
+      function startWork() {
+        if (!state.baseline) return;
+        state.isWorking = true;
+        state.focusFinished = false;
+        state.focusRemainingMs = state.focusDurationMs;
+        state.lastTickAt = Date.now();
+        state.badCandidateStartedAt = null;
+        state.goodCandidateStartedAt = null;
+        els.remainingTime.textContent = formatClock(state.focusRemainingMs);
+        setStatus("working_good", "좋아요. 현재 자세가 안정적이에요.");
+        requestNotificationPermission();
+      }
+
+      function stopWork() {
+        state.isWorking = false;
+        state.badCandidateStartedAt = null;
+        state.goodCandidateStartedAt = null;
+        state.focusFinished = true;
+        setStatus("finished", "작업을 마쳤어요. 오늘의 자세 리포트를 확인해보세요.");
+      }
+
+      window.setInterval(() => {
+        const now = Date.now();
+        const delta = now - state.lastTickAt;
+        state.lastTickAt = now;
+        if (state.isWorking) {
+          state.totalWorkingTime += delta;
+          state.focusRemainingMs = Math.max(0, state.focusRemainingMs - delta);
+          if (state.status === "working_good") state.goodPostureTime += delta;
+          if (state.status === "working_bad") state.badPostureTime += delta;
+          if (state.focusRemainingMs === 0 && !state.focusFinished) {
+            state.focusFinished = true;
+            state.isWorking = false;
+            setStatus("finished", "집중 시간이 끝났어요. 잠깐 스트레칭을 해볼까요?");
+            showFinishPopup();
+          }
+        }
+        els.remainingTime.textContent = formatClock(state.focusRemainingMs);
+        updateStats();
+      }, 1000);
+
+      function bindTimeInputs(inputs, onChange) {
+        inputs.forEach((input) => {
+          input.addEventListener("focus", () => input.select());
+          input.addEventListener("input", () => {
+            const value = Number.parseInt(input.value, 10);
+            if (!Number.isNaN(value) && value < 0) input.value = "0";
+            onChange();
+          });
+          input.addEventListener("blur", () => {
+            if (inputs === focusInputs) normalizeTimeInputs(els.focusHours, els.focusMinutes, els.focusSeconds);
+            if (inputs === alertInputs) normalizeTimeInputs(els.alertHours, els.alertMinutes, els.alertSeconds);
+            onChange();
+          });
+        });
+      }
+
+      const focusInputs = [els.focusHours, els.focusMinutes, els.focusSeconds];
+      const alertInputs = [els.alertHours, els.alertMinutes, els.alertSeconds];
+      bindTimeInputs(focusInputs, updateFocusDuration);
+      bindTimeInputs(alertInputs, updateAlertDelay);
+
+      els.goTimeSetup.addEventListener("click", () => { requestNotificationPermission(); showView("timeView"); });
+      els.goCalibration.addEventListener("click", () => {
+        normalizeTimeInputs(els.focusHours, els.focusMinutes, els.focusSeconds);
+        updateFocusDuration();
+        if (state.returnToFocusAfterTimeEdit && state.baseline) {
+          state.returnToFocusAfterTimeEdit = false;
+          state.reuseBaselineNextSession = false;
+          showView("focusView");
+          startWork();
+          return;
+        }
+        showView("alertDelayView");
+      });
+      els.goScanSetup.addEventListener("click", () => {
+        normalizeTimeInputs(els.alertHours, els.alertMinutes, els.alertSeconds);
+        updateAlertDelay();
+        if (state.reuseBaselineNextSession && state.baseline) {
+          state.reuseBaselineNextSession = false;
+          showView("focusView");
+          startWork();
+          return;
+        }
+        showView("calibrationView");
+      });
+      els.beginCalibrationFlow.addEventListener("click", async () => {
+        moveCameraTo(els.scanVideoShell);
+        showView("cameraScanView");
+        if (!state.isCameraOn) await startCamera();
+        if (state.isCameraOn) await calibrate();
+      });
+      els.startFocusAfterScan.addEventListener("click", () => { moveCameraTo(els.focusVideoShell); showView("focusView"); startWork(); });
+      els.recalibrate.addEventListener("click", () => { moveCameraTo(els.scanVideoShell); showView("cameraScanView"); calibrate(); });
+      els.editFocusTime.addEventListener("click", () => { state.isWorking = false; state.returnToFocusAfterTimeEdit = true; hidePosturePopup(); showView("timeView"); });
+      els.editAlertTime.addEventListener("click", () => { state.isWorking = false; state.reuseBaselineNextSession = true; hidePosturePopup(); showView("alertDelayView"); });
+      els.finishFromControls.addEventListener("click", () => { stopWork(); hidePosturePopup(); hideFinishPopup(); hideStretchPopup(); showView("finalView"); });
+      els.restartFromControls.addEventListener("click", resetAppToStart);
+      els.ignorePopup.addEventListener("click", hidePosturePopup);
+      els.resetPopup.addEventListener("click", () => { hidePosturePopup(); setStatus("working_good", "좋아요. 현재 자세가 안정적이에요."); state.badCandidateStartedAt = null; state.goodCandidateStartedAt = null; });
+      els.continueFocus.addEventListener("click", () => { hideFinishPopup(); showStretchPopup(); });
+      els.finishFocus.addEventListener("click", () => { hideFinishPopup(); stopWork(); showView("finalView"); });
+      els.stretchYes.addEventListener("click", () => { hideStretchPopup(); window.open("https://www.youtube.com/watch?v=h9aAx9PYYew", "_blank", "noopener,noreferrer"); });
+      els.stretchNo.addEventListener("click", () => { hideStretchPopup(); state.reuseBaselineNextSession = true; showView("timeView"); });
+      els.restartApp.addEventListener("click", resetAppToStart);
+
+      updateFocusDuration();
+      updateAlertDelay();
+      updateButtons();
+      updateStats();
+    </script>
+  </body>
+</html>
