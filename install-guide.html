@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>런어스 스크립트 추출기 — 설치 가이드</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#09090B;--surface:#111113;--surface2:#18181B;
+  --border:#27272A;--border2:#3F3F46;
+  --accent:#22C55E;--accent2:#16A34A;--accent-glow:rgba(34,197,94,0.15);
+  --text:#FAFAFA;--text2:#A1A1AA;--text3:#52525B;
+  --mono:'Geist Mono',monospace;--sans:'Geist',-apple-system,sans-serif;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+#sticky{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(9,9,11,0.88);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  padding:0 24px;display:flex;align-items:center;height:52px;
+}
+.prog-step{display:flex;align-items:center;gap:10px;padding:0 16px;height:100%;cursor:pointer;transition:all 0.2s;border-bottom:2px solid transparent;flex-shrink:0}
+.prog-step:hover{background:var(--surface)}
+.prog-step.active{border-bottom-color:var(--accent)}
+.prog-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600;background:var(--surface2);border:1px solid var(--border);color:var(--text3);transition:all 0.3s;flex-shrink:0}
+.prog-step.active .prog-dot{background:var(--accent);border-color:var(--accent);color:#000}
+.prog-step.done .prog-dot{background:var(--accent2);border-color:var(--accent2);color:#000}
+.prog-label{font-size:12px;color:var(--text2);font-weight:500;white-space:nowrap}
+.prog-step.active .prog-label{color:var(--text)}
+.prog-sep{width:1px;height:24px;background:var(--border);flex-shrink:0}
+
+.hero{max-width:900px;margin:0 auto;padding:110px 32px 80px;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:0.15em;color:var(--accent);margin-bottom:20px;display:flex;align-items:center;gap:8px}
+.eyebrow::before{content:'';width:20px;height:1px;background:var(--accent)}
+h1{font-size:clamp(36px,5vw,56px);font-weight:800;line-height:1.05;letter-spacing:-0.03em;margin-bottom:20px}
+h1 .gr{background:linear-gradient(135deg,#22C55E,#4ADE80);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-desc{font-size:16px;color:var(--text2);line-height:1.7;margin-bottom:32px;font-weight:300}
+.hero-cta{display:inline-flex;align-items:center;gap:10px;background:var(--accent);color:#000;font-size:14px;font-weight:700;padding:14px 24px;border-radius:10px;text-decoration:none;transition:all 0.2s;letter-spacing:-0.01em}
+.hero-cta:hover{background:#4ADE80;transform:translateY(-1px)}
+
+.hero-right{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.terminal-bar{display:flex;align-items:center;gap:6px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.t-dot{width:10px;height:10px;border-radius:50%}
+.t-dot.r{background:#FF5F56}.t-dot.y{background:#FFBD2E}.t-dot.g{background:#27C93F}
+.terminal-title{font-family:var(--mono);font-size:11px;color:var(--text3);margin:0 auto}
+.terminal-body{padding:20px;font-family:var(--mono);font-size:12px;line-height:2}
+.t-line{display:flex;gap:10px}
+.t-prompt{color:var(--accent)}.t-cmd{color:var(--text)}.t-out{color:var(--text2);padding-left:18px}.t-success{color:var(--accent)}
+.t-cursor{display:inline-block;width:8px;height:14px;background:var(--accent);vertical-align:middle;animation:blink 1s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+.sdiv{max-width:900px;margin:0 auto;padding:0 32px 60px;display:flex;align-items:center;gap:16px}
+.sdiv-line{flex:1;height:1px;background:var(--border)}
+.sdiv-text{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:0.1em;white-space:nowrap}
+
+.steps-container{max-width:900px;margin:0 auto;padding:0 32px 80px}
+.step-wrapper{display:grid;grid-template-columns:80px 1fr;margin-bottom:0;position:relative}
+.step-left{display:flex;flex-direction:column;align-items:center;padding-top:24px}
+.step-num-wrap{width:44px;height:44px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text3);flex-shrink:0;z-index:1;position:relative;transition:all 0.4s}
+.step-wrapper.active .step-num-wrap{background:var(--accent);border-color:var(--accent);color:#000;box-shadow:0 0 24px var(--accent-glow)}
+.step-wrapper.done .step-num-wrap{background:var(--accent2);border-color:var(--accent2);color:#000}
+.step-line{flex:1;width:1px;background:var(--border);margin:8px 0;min-height:40px;display:block}
+.step-wrapper.done .step-line{background:var(--accent2)}
+.step-wrapper:last-child .step-line{display:none}
+
+.step-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin:12px 0 24px;padding:28px;transition:border-color 0.3s}
+.step-wrapper.active .step-card{border-color:rgba(34,197,94,0.5);box-shadow:0 0 40px var(--accent-glow)}
+.step-wrapper.done .step-card{opacity:0.55}
+.step-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:12px}
+.step-title{font-size:18px;font-weight:700;color:var(--text);letter-spacing:-0.02em}
+.step-badge{font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:100px;border:1px solid var(--border);color:var(--text3);white-space:nowrap;flex-shrink:0}
+.step-wrapper.active .step-badge{border-color:var(--accent);color:var(--accent)}
+
+.instr-list{display:flex;flex-direction:column}
+.instr{display:flex;gap:16px;padding:14px 0;border-bottom:1px solid var(--border)}
+.instr:last-child{border-bottom:none;padding-bottom:0}
+.instr-n{font-family:var(--mono);font-size:11px;color:var(--text3);min-width:18px;padding-top:2px;font-weight:600}
+.instr-body{flex:1}
+.instr-text{font-size:14px;color:var(--text);line-height:1.6;margin-bottom:6px}
+.instr-text b{color:var(--accent);font-weight:600}
+.instr-hint{font-size:12px;color:var(--text3);line-height:1.5}
+
+.code-box{background:#000;border:1px solid var(--border2);border-radius:10px;padding:14px 16px;margin:8px 0;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color 0.15s}
+.code-box:hover{border-color:var(--accent)}
+.code-text{font-family:var(--mono);font-size:12px;color:#86EFAC;word-break:break-all;line-height:1.6;flex:1}
+.copy-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text2);padding:5px 10px;font-family:var(--mono);font-size:11px;cursor:pointer;flex-shrink:0;transition:all 0.15s;font-weight:500}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent)}
+.copy-btn.ok{border-color:var(--accent);color:var(--accent)}
+
+.alert{border-radius:8px;padding:12px 16px;margin:12px 0;font-size:13px;line-height:1.6;display:flex;gap:10px;align-items:flex-start}
+.alert-warn{background:rgba(234,88,12,0.1);border:1px solid rgba(234,88,12,0.25);color:#FB923C}
+.alert-ok{background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);color:#4ADE80}
+
+.done-btn{display:flex;align-items:center;justify-content:space-between;background:var(--accent);color:#000;border:none;border-radius:10px;padding:14px 20px;font-size:14px;font-weight:700;cursor:pointer;width:100%;margin-top:20px;letter-spacing:-0.01em;font-family:var(--sans);transition:all 0.2s}
+.done-btn:hover{background:#4ADE80;transform:translateY(-1px)}
+.done-btn.sec{background:var(--surface2);border:1px solid var(--border);color:var(--text2)}
+.done-btn.sec:hover{border-color:var(--border2);color:var(--text);transform:none}
+
+.dl-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin:12px 0;display:flex;align-items:center;gap:16px}
+.dl-icon{width:44px;height:44px;background:var(--accent-glow);border:1px solid rgba(34,197,94,0.3);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.dl-info{flex:1}
+.dl-name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px}
+.dl-size{font-size:12px;color:var(--text3);font-family:var(--mono)}
+.dl-btn{background:var(--accent);color:#000;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block;font-family:var(--sans);transition:all 0.2s;flex-shrink:0}
+.dl-btn:hover{background:#4ADE80}
+
+.usage-section{max-width:900px;margin:0 auto;padding:0 32px 80px}
+.sec-title{font-size:28px;font-weight:800;letter-spacing:-0.03em;margin-bottom:32px}
+.flow-steps{display:grid;grid-template-columns:repeat(6,1fr);background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:32px}
+.flow-item{padding:20px 16px;text-align:center;border-right:1px solid var(--border)}
+.flow-item:last-child{border-right:none}
+.flow-n{font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:8px;letter-spacing:0.1em}
+.flow-icon{font-size:24px;margin-bottom:8px;display:block}
+.flow-text{font-size:12px;color:var(--text2);line-height:1.4;font-weight:500}
+
+.faq-section{max-width:900px;margin:0 auto;padding:0 32px 120px}
+.faq-item{border-top:1px solid var(--border)}
+.faq-item:last-child{border-bottom:1px solid var(--border)}
+.faq-q{display:flex;justify-content:space-between;align-items:center;padding:18px 0;cursor:pointer;gap:16px}
+.faq-q-text{font-size:15px;font-weight:600;color:var(--text)}
+.faq-toggle{width:24px;height:24px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text3);flex-shrink:0;transition:all 0.2s}
+.faq-item.open .faq-toggle{background:var(--accent);border-color:var(--accent);color:#000}
+.faq-a{display:none;padding:0 0 18px;font-size:14px;color:var(--text2);line-height:1.7}
+.faq-item.open .faq-a{display:block}
+
+footer{border-top:1px solid var(--border);padding:24px 32px;max-width:900px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}
+.footer-l{font-family:var(--mono);font-size:11px;color:var(--text3)}
+.footer-r{font-size:12px;color:var(--text3)}
+
+@media(max-width:700px){
+  .hero{grid-template-columns:1fr;padding:80px 20px 60px}
+  .hero-right{display:none}
+  .steps-container,.usage-section,.faq-section,.sdiv,footer{padding-left:20px;padding-right:20px}
+  .flow-steps{grid-template-columns:repeat(3,1fr)}
+  .flow-item:nth-child(3){border-right:none}
+  #sticky{padding:0 10px;overflow-x:auto}
+  .prog-label{display:none}
+  .prog-step{padding:0 8px}
+}
+</style>
+</head>
+<body>
+
+<nav id="sticky">
+  <div class="prog-step active" id="pstep-1" onclick="jumpTo(1)"><div class="prog-dot" id="pdot-1">1</div><div class="prog-label">Python</div></div>
+  <div class="prog-sep"></div>
+  <div class="prog-step" id="pstep-2" onclick="jumpTo(2)"><div class="prog-dot" id="pdot-2">2</div><div class="prog-label">FFmpeg</div></div>
+  <div class="prog-sep"></div>
+  <div class="prog-step" id="pstep-3" onclick="jumpTo(3)"><div class="prog-dot" id="pdot-3">3</div><div class="prog-label">확장 설치</div></div>
+  <div class="prog-sep"></div>
+  <div class="prog-step" id="pstep-4" onclick="jumpTo(4)"><div class="prog-dot" id="pdot-4">4</div><div class="prog-label">API 키</div></div>
+  <div class="prog-sep"></div>
+  <div class="prog-step" id="pstep-5" onclick="jumpTo(5)"><div class="prog-dot" id="pdot-5">5</div><div class="prog-label">Native Host</div></div>
+  <div style="flex:1"></div>
+  <div style="font-family:var(--mono);font-size:11px;color:var(--text3)" id="step-counter">STEP 1 / 5</div>
+</nav>
+
+<section class="hero">
+  <div>
+    <div class="eyebrow">BIT Automation Sprint · Week 2</div>
+    <h1>강의를<br><span class="gr">텍스트로,</span><br>3분 안에</h1>
+    <p class="hero-desc">런어스 강의 재생 → 확장 클릭 하나면 끝.<br>FFmpeg 다운로드부터 AI 변환까지 전부 자동이에요.</p>
+    <a class="hero-cta" href="#step-1">설치 시작하기 →</a>
+  </div>
+  <div class="hero-right">
+    <div class="terminal-bar"><div class="t-dot r"></div><div class="t-dot y"></div><div class="t-dot g"></div><div class="terminal-title">learnus-script-extractor</div></div>
+    <div class="terminal-body">
+      <div class="t-line"><span class="t-prompt">$</span><span class="t-cmd"> python --version</span></div>
+      <div class="t-line"><span class="t-out">Python 3.13.0</span></div>
+      <div class="t-line" style="margin-top:6px"><span class="t-prompt">$</span><span class="t-cmd"> ffmpeg -version</span></div>
+      <div class="t-line"><span class="t-out">ffmpeg version 8.1.1</span></div>
+      <div class="t-line" style="margin-top:6px"><span class="t-prompt">$</span><span class="t-cmd"> .\setup.ps1</span></div>
+      <div class="t-line"><span class="t-out">Extension ID: cfmploi...</span></div>
+      <div class="t-line"><span class="t-success">✓ Done! Restart Chrome.</span></div>
+      <div class="t-line" style="margin-top:6px"><span class="t-prompt">$</span><span class="t-cursor"></span></div>
+    </div>
+  </div>
+</section>
+
+<div class="sdiv"><div class="sdiv-line"></div><div class="sdiv-text">INSTALLATION · 5 STEPS</div><div class="sdiv-line"></div></div>
+
+<div class="steps-container">
+
+  <div class="step-wrapper active" id="step-1">
+    <div class="step-left"><div class="step-num-wrap">1</div><div class="step-line"></div></div>
+    <div class="step-card">
+      <div class="step-header"><div class="step-title">Python 설치 확인</div><div class="step-badge">약 2분</div></div>
+      <div class="instr-list">
+        <div class="instr"><div class="instr-n">01</div><div class="instr-body"><div class="instr-text"><b>Win + R</b> → <b>powershell</b> 입력 → Enter</div><div class="instr-hint">파란 PowerShell 창이 열려요</div></div></div>
+        <div class="instr"><div class="instr-n">02</div><div class="instr-body"><div class="instr-text">아래 명령어 복사 → PowerShell에 붙여넣기 → Enter</div>
+          <div class="code-box" onclick="copyCode(this,'python --version')"><div class="code-text">python --version</div><button class="copy-btn">복사</button></div>
+          <div class="instr-hint">Python 3.x.x 뜨면 ✅ — 오류 나면 아래 링크에서 설치</div></div></div>
+      </div>
+      <div class="alert alert-warn"><span style="font-size:16px;flex-shrink:0">⚠</span><span>없다면 <a href="https://www.python.org/downloads/" target="_blank" style="color:inherit;font-weight:700;text-decoration:underline">python.org</a>에서 설치. <b style="color:#FB923C">"Add to PATH" 체크 필수!</b></span></div>
+      <button class="done-btn" onclick="nextStep(1)">Python 확인 완료 <span>→</span></button>
+    </div>
+  </div>
+
+  <div class="step-wrapper" id="step-2">
+    <div class="step-left"><div class="step-num-wrap">2</div><div class="step-line"></div></div>
+    <div class="step-card">
+      <div class="step-header"><div class="step-title">FFmpeg 설치</div><div class="step-badge">약 3분</div></div>
+      <div class="instr-list">
+        <div class="instr"><div class="instr-n">01</div><div class="instr-body"><div class="instr-text">이미 설치됐는지 확인</div>
+          <div class="code-box" onclick="copyCode(this,'ffmpeg -version')"><div class="code-text">ffmpeg -version</div><button class="copy-btn">복사</button></div>
+          <div class="instr-hint">버전 뜨면 ✅ 바로 완료 클릭 — 오류 나면 아래 설치</div></div></div>
+        <div class="instr"><div class="instr-n">02</div><div class="instr-body"><div class="instr-text">없다면 자동 설치 (1~2분 소요)</div>
+          <div class="code-box" onclick="copyCode(this,'winget install --id Gyan.FFmpeg --accept-package-agreements --accept-source-agreements')"><div class="code-text">winget install --id Gyan.FFmpeg --accept-package-agreements --accept-source-agreements</div><button class="copy-btn">복사</button></div>
+          <div class="instr-hint">완료 후 PowerShell 닫고 다시 열기</div></div></div>
+      </div>
+      <button class="done-btn" onclick="nextStep(2)">FFmpeg 확인 완료 <span>→</span></button>
+      <button class="done-btn sec" onclick="prevStep(2)">← 이전</button>
+    </div>
+  </div>
+
+  <div class="step-wrapper" id="step-3">
+    <div class="step-left"><div class="step-num-wrap">3</div><div class="step-line"></div></div>
+    <div class="step-card">
+      <div class="step-header"><div class="step-title">크롬 확장 설치</div><div class="step-badge">약 2분</div></div>
+      <div class="instr-list">
+        <div class="instr"><div class="instr-n">01</div><div class="instr-body"><div class="instr-text">파일 다운로드 → 바탕화면에 압축 풀기</div>
+          <div class="dl-card"><div class="dl-icon">📦</div><div class="dl-info"><div class="dl-name">learnus-extension.zip</div><div class="dl-size">Chrome Extension · v2.0</div></div><a class="dl-btn" href="learnus-extension.zip" download>다운로드</a></div></div></div>
+        <div class="instr"><div class="instr-n">02</div><div class="instr-body"><div class="instr-text">크롬 주소창에 입력</div>
+          <div class="code-box" onclick="copyCode(this,'chrome://extensions')"><div class="code-text">chrome://extensions</div><button class="copy-btn">복사</button></div></div></div>
+        <div class="instr"><div class="instr-n">03</div><div class="instr-body"><div class="instr-text">오른쪽 위 <b>개발자 모드</b> 토글 켜기</div></div></div>
+        <div class="instr"><div class="instr-n">04</div><div class="instr-body"><div class="instr-text"><b>압축해제된 확장 프로그램 로드</b> → <b>learnus-ext</b> 폴더 선택</div><div class="instr-hint">"런어스 스크립트 추출기" 카드 뜨면 성공!</div></div></div>
+        <div class="instr"><div class="instr-n">05</div><div class="instr-body"><div class="instr-text">카드 아래 <b>ID: xxxxxx...</b> 복사해두기</div><div class="instr-hint">다음 단계에서 필요해요</div></div></div>
+      </div>
+      <button class="done-btn" onclick="nextStep(3)">확장 설치 완료 <span>→</span></button>
+      <button class="done-btn sec" onclick="prevStep(3)">← 이전</button>
+    </div>
+  </div>
+
+  <div class="step-wrapper" id="step-4">
+    <div class="step-left"><div class="step-num-wrap">4</div><div class="step-line"></div></div>
+    <div class="step-card">
+      <div class="step-header"><div class="step-title">OpenAI API 키 발급</div><div class="step-badge">약 3분 · 1회만</div></div>
+      <div class="instr-list">
+        <div class="instr"><div class="instr-n">01</div><div class="instr-body"><div class="instr-text"><a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--accent);font-weight:700;text-decoration:none">platform.openai.com/api-keys</a> 접속 → 로그인</div></div></div>
+        <div class="instr"><div class="instr-n">02</div><div class="instr-body"><div class="instr-text"><b>Create new secret key</b> 클릭 → <b>sk-...</b> 키 복사</div><div class="instr-hint">이 창 닫으면 다시 못 봐요. 꼭 저장!</div></div></div>
+      </div>
+      <div class="alert alert-ok"><span style="font-size:16px;flex-shrink:0">💡</span><span>50분 강의 약 ₩400. 처음 가입 시 무료 크레딧 제공. <b style="color:#4ADE80">각자 자기 키로 비용 각자 부담!</b></span></div>
+      <button class="done-btn" onclick="nextStep(4)">API 키 발급 완료 <span>→</span></button>
+      <button class="done-btn sec" onclick="prevStep(4)">← 이전</button>
+    </div>
+  </div>
+
+  <div class="step-wrapper" id="step-5">
+    <div class="step-left"><div class="step-num-wrap">5</div></div>
+    <div class="step-card">
+      <div class="step-header"><div class="step-title">Native Host 등록</div><div class="step-badge">약 1분 · 최초 1회</div></div>
+      <div class="instr-list">
+        <div class="instr"><div class="instr-n">01</div><div class="instr-body"><div class="instr-text">PowerShell에서 실행. <b>본인아이디</b>를 Windows 사용자 이름으로 교체 (예: kyj04)</div>
+          <div class="code-box" onclick="copyCode(this,'powershell -ExecutionPolicy Bypass -File \"C:\\Users\\본인아이디\\Desktop\\learnus-ext\\native-host\\setup.ps1\"')"><div class="code-text">powershell -ExecutionPolicy Bypass -File "C:\Users\본인아이디\Desktop\learnus-ext\native-host\setup.ps1"</div><button class="copy-btn">복사</button></div></div></div>
+        <div class="instr"><div class="instr-n">02</div><div class="instr-body"><div class="instr-text">Extension ID 입력 → STEP 3에서 복사한 ID 붙여넣기</div></div></div>
+        <div class="instr"><div class="instr-n">03</div><div class="instr-body"><div class="instr-text"><b>"Done! Restart Chrome."</b> 뜨면 성공 → 크롬 완전 종료 후 재시작</div></div></div>
+      </div>
+      <div class="alert alert-ok"><span style="font-size:16px;flex-shrink:0">🎉</span><span>설치 완료! 이제 런어스에서 확장 아이콘 클릭 한 번으로 스크립트 추출!</span></div>
+      <button class="done-btn" onclick="celebrate()" style="background:linear-gradient(135deg,#22C55E,#4ADE80)">🎉 설치 완료!</button>
+      <button class="done-btn sec" onclick="prevStep(5)">← 이전</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="sdiv"><div class="sdiv-line"></div><div class="sdiv-text">HOW TO USE</div><div class="sdiv-line"></div></div>
+<section class="usage-section">
+  <div class="sec-title">사용 방법</div>
+  <div class="flow-steps">
+    <div class="flow-item"><div class="flow-n">01</div><span class="flow-icon">📺</span><div class="flow-text">런어스 강의 열기</div></div>
+    <div class="flow-item"><div class="flow-n">02</div><span class="flow-icon">▶️</span><div class="flow-text">영상 재생</div></div>
+    <div class="flow-item"><div class="flow-n">03</div><span class="flow-icon">🧩</span><div class="flow-text">확장 아이콘 클릭</div></div>
+    <div class="flow-item"><div class="flow-n">04</div><span class="flow-icon">🔑</span><div class="flow-text">API 키 입력 (최초 1회)</div></div>
+    <div class="flow-item"><div class="flow-n">05</div><span class="flow-icon">⚡</span><div class="flow-text">변환 시작 3~5분</div></div>
+    <div class="flow-item"><div class="flow-n">06</div><span class="flow-icon">📋</span><div class="flow-text">텍스트 복사!</div></div>
+  </div>
+</section>
+
+<div class="sdiv"><div class="sdiv-line"></div><div class="sdiv-text">FAQ</div><div class="sdiv-line"></div></div>
+<section class="faq-section">
+  <div class="sec-title">자주 묻는 질문</div>
+  <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span class="faq-q-text">API 키를 매번 입력해야 하나요?</span><div class="faq-toggle">+</div></div><div class="faq-a">아니요! 최초 1회 입력 후 자동 저장돼요.</div></div>
+  <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span class="faq-q-text">비용이 얼마나 드나요?</span><div class="faq-toggle">+</div></div><div class="faq-a">Whisper API는 분당 약 $0.006 (약 ₩8). 50분 강의 기준 약 ₩400. 처음 가입 시 무료 크레딧으로 충분해요. 각자 자신의 API 키를 쓰니까 비용도 각자 부담이에요.</div></div>
+  <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span class="faq-q-text">"Native Host가 설치되어 있지 않아요" 오류</span><div class="faq-toggle">+</div></div><div class="faq-a">STEP 5를 다시 실행하고, 크롬을 완전히 종료(트레이 아이콘 우클릭 → 크롬 종료) 후 재시작해주세요.</div></div>
+  <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span class="faq-q-text">Mac에서도 쓸 수 있나요?</span><div class="faq-toggle">+</div></div><div class="faq-a">현재 Windows 전용이에요. Mac 지원은 추후 업데이트 예정.</div></div>
+  <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)"><span class="faq-q-text">내 강의 데이터가 안전한가요?</span><div class="faq-toggle">+</div></div><div class="faq-a">오디오 파일이 OpenAI 서버로 전송되고, 변환 후 임시 파일은 자동 삭제돼요. OpenAI는 API 요청 데이터를 학습에 사용하지 않아요.</div></div>
+</section>
+
+<footer><div class="footer-l">LEARNUS → SCRIPT · BIT 2026</div><div class="footer-r">본인 수강 강의 학습 목적으로만 사용</div></footer>
+
+<script>
+var current=1;
+function updateUI(){
+  for(var i=1;i<=5;i++){
+    var w=document.getElementById('step-'+i);
+    var ps=document.getElementById('pstep-'+i);
+    var pd=document.getElementById('pdot-'+i);
+    w.classList.remove('active','done');
+    ps.classList.remove('active','done');
+    if(i<current){w.classList.add('done');ps.classList.add('done');pd.textContent='✓'}
+    else if(i===current){w.classList.add('active');ps.classList.add('active');pd.textContent=i}
+    else{pd.textContent=i}
+  }
+  document.getElementById('step-counter').textContent='STEP '+current+' / 5';
+}
+function nextStep(n){if(current<5){current=n+1;updateUI();setTimeout(function(){var el=document.getElementById('step-'+current);el.scrollIntoView({behavior:'smooth',block:'start'});window.scrollBy(0,-70)},100)}}
+function prevStep(n){if(current>1){current=n-1;updateUI();setTimeout(function(){var el=document.getElementById('step-'+current);el.scrollIntoView({behavior:'smooth',block:'start'});window.scrollBy(0,-70)},100)}}
+function jumpTo(n){current=n;updateUI();setTimeout(function(){var el=document.getElementById('step-'+n);el.scrollIntoView({behavior:'smooth',block:'start'});window.scrollBy(0,-70)},100)}
+function copyCode(el,text){var btn=el.querySelector('.copy-btn');navigator.clipboard.writeText(text).then(function(){btn.textContent='복사됨 ✓';btn.classList.add('ok');setTimeout(function(){btn.textContent='복사';btn.classList.remove('ok')},1500)})}
+function toggleFaq(el){var item=el.parentElement;var isOpen=item.classList.contains('open');document.querySelectorAll('.faq-item').forEach(function(f){f.classList.remove('open');f.querySelector('.faq-toggle').textContent='+'});if(!isOpen){item.classList.add('open');el.querySelector('.faq-toggle').textContent='−'}}
+function celebrate(){var b=event.target;b.textContent='🎊 완료! 런어스에서 써보세요!';setTimeout(function(){window.scrollTo({top:0,behavior:'smooth'})},1500)}
+for(var i=1;i<=5;i++){(function(n){document.getElementById('pdot-'+n).addEventListener('click',function(){jumpTo(n)})})(i)}
+updateUI();
+</script>
+</body>
+</html>
