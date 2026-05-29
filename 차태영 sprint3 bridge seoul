@@ -1,0 +1,1665 @@
+const appName = "com.bridgeseoul.prototype";
+const apiBase = window.location.protocol === "file:" ? "http://127.0.0.1:8787" : "";
+
+const places = [
+  {
+    id: "hongdae-exit-6",
+    englishName: "Hongdae Station Exit 6",
+    koreanName: "홍대입구역 6번출구",
+    category: "Subway exit",
+    area: "Hongdae",
+    lat: 37.55763,
+    lng: 126.92411,
+    reviews: 0,
+    rating: null,
+    waitlistGrade: "Unknown",
+    keywords: ["hongdae station exit 6", "hongik university station exit 6", "hongdae exit 6", "홍대입구역 6번출구"],
+  },
+  {
+    id: "myeongdong-kyoja",
+    englishName: "Myeongdong Kyoja Main",
+    koreanName: "명동교자 본점",
+    category: "Restaurant",
+    area: "Myeongdong",
+    lat: 37.56255,
+    lng: 126.98504,
+    reviews: 12800,
+    rating: 4.4,
+    waitlistGrade: "B",
+    keywords: ["myeongdong kyoja", "myeongdong gyoja", "명동교자", "kalguksu myeongdong"],
+  },
+  {
+    id: "seongsu-bbq",
+    englishName: "Seongsu Korean BBQ",
+    koreanName: "성수 고기집",
+    category: "Restaurant search",
+    area: "Seongsu",
+    lat: 37.54458,
+    lng: 127.05596,
+    reviews: 930,
+    rating: 4.3,
+    waitlistGrade: "C",
+    keywords: ["korean bbq near seongsu", "seongsu bbq", "samgyeopsal seongsu", "성수 고기집", "성수 삼겹살"],
+  },
+  {
+    id: "seoul-forest",
+    englishName: "Seoul Forest",
+    koreanName: "서울숲",
+    category: "Park",
+    area: "Seongsu",
+    lat: 37.54439,
+    lng: 127.03744,
+    reviews: 14800,
+    rating: 4.6,
+    waitlistGrade: "A",
+    keywords: ["seoul forest", "서울숲", "seongsu park"],
+  },
+  {
+    id: "gwangjang-market",
+    englishName: "Gwangjang Market",
+    koreanName: "광장시장",
+    category: "Market",
+    area: "Jongno",
+    lat: 37.57004,
+    lng: 126.99963,
+    reviews: 21400,
+    rating: 4.3,
+    waitlistGrade: "A",
+    keywords: ["gwangjang market", "kwangjang market", "광장시장", "street food market"],
+  },
+  {
+    id: "gangnam-station",
+    englishName: "Gangnam Station",
+    koreanName: "강남역",
+    category: "Subway station",
+    area: "Gangnam",
+    lat: 37.49795,
+    lng: 127.02764,
+    reviews: 0,
+    rating: null,
+    waitlistGrade: "Unknown",
+    keywords: ["gangnam station", "강남역"],
+  },
+  {
+    id: "itaewon-station",
+    englishName: "Itaewon Station",
+    koreanName: "이태원역",
+    category: "Subway station",
+    area: "Itaewon",
+    lat: 37.53449,
+    lng: 126.99452,
+    reviews: 0,
+    rating: null,
+    waitlistGrade: "Unknown",
+    keywords: ["itaewon station", "이태원역"],
+  },
+  {
+    id: "incheon-airport-t1",
+    englishName: "Incheon Airport Terminal 1",
+    koreanName: "인천국제공항 제1여객터미널",
+    category: "Airport",
+    area: "Incheon",
+    lat: 37.44752,
+    lng: 126.45050,
+    reviews: 0,
+    rating: null,
+    waitlistGrade: "A",
+    keywords: ["incheon airport terminal 1", "icn terminal 1", "인천공항 1터미널"],
+  },
+];
+
+const synonymMap = new Map([
+  ["korean bbq", ["고기집", "삼겹살", "한우"]],
+  ["bbq", ["고기집", "삼겹살"]],
+  ["sushi", ["초밥", "스시", "오마카세"]],
+  ["sashimi", ["사시미", "횟집"]],
+  ["ramen", ["라멘"]],
+  ["noodle", ["국수", "면요리"]],
+  ["chicken", ["치킨", "닭갈비"]],
+  ["dessert", ["디저트", "카페"]],
+  ["hongdae", ["홍대", "홍대입구", "홍대입구역"]],
+  ["seongsu", ["성수", "성수동"]],
+  ["myeongdong", ["명동"]],
+  ["gangnam", ["강남", "강남역"]],
+  ["itaewon", ["이태원", "이태원역"]],
+  ["exit", ["출구"]],
+]);
+
+const categoryTerms = [
+  { test: "korean bbq", terms: ["고기집", "삼겹살", "한우"] },
+  { test: "bbq", terms: ["고기집", "삼겹살"] },
+  { test: "sushi", terms: ["초밥", "스시", "오마카세"] },
+  { test: "초밥", terms: ["초밥", "스시"] },
+  { test: "스시", terms: ["스시", "초밥"] },
+  { test: "오마카세", terms: ["오마카세", "스시"] },
+  { test: "sashimi", terms: ["사시미", "횟집"] },
+  { test: "ramen", terms: ["라멘"] },
+  { test: "noodle", terms: ["국수", "면요리"] },
+  { test: "chicken", terms: ["치킨", "닭갈비"] },
+  { test: "dessert", terms: ["디저트", "카페"] },
+  { test: "bar", terms: ["술집", "바"] },
+  { test: "cafe", terms: ["카페"] },
+  { test: "coffee", terms: ["카페", "커피"] },
+  { test: "restaurant", terms: ["맛집", "식당"] },
+  { test: "market", terms: ["시장"] },
+  { test: "고기집", terms: ["고기집", "삼겹살"] },
+  { test: "삼겹살", terms: ["삼겹살", "고기집"] },
+];
+
+const areaTerms = [
+  { test: "hongdae", terms: ["홍대", "홍대입구"] },
+  { test: "홍대", terms: ["홍대", "홍대입구"] },
+  { test: "seongsu", terms: ["성수", "성수동"] },
+  { test: "성수", terms: ["성수", "성수동"] },
+  { test: "myeongdong", terms: ["명동"] },
+  { test: "명동", terms: ["명동"] },
+  { test: "gangnam", terms: ["강남", "강남역"] },
+  { test: "강남", terms: ["강남", "강남역"] },
+  { test: "itaewon", terms: ["이태원"] },
+  { test: "이태원", terms: ["이태원"] },
+  { test: "jamsil", terms: ["잠실"] },
+  { test: "잠실", terms: ["잠실"] },
+  { test: "yeonnam", terms: ["연남", "연남동"] },
+  { test: "hapjeong", terms: ["합정"] },
+];
+
+let activeMode = "public";
+let liveSearchAvailable = false;
+let routeRequestId = 0;
+let findRequestId = 0;
+let routePreferenceQuery = "";
+
+const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+
+const normalize = (value) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9가-힣\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const encode = (value) => encodeURIComponent(value);
+
+const spellingCorrections = new Map([
+  ["susi", "sushi"],
+  ["sush", "sushi"],
+  ["suhsi", "sushi"],
+  ["susshi", "sushi"],
+  ["restarant", "restaurant"],
+  ["restaraunt", "restaurant"],
+  ["resturant", "restaurant"],
+  ["restraunt", "restaurant"],
+  ["restorant", "restaurant"],
+  ["gangam", "gangnam"],
+  ["ganam", "gangnam"],
+  ["gagnam", "gangnam"],
+  ["seongsuu", "seongsu"],
+  ["sungsu", "seongsu"],
+  ["hongde", "hongdae"],
+  ["hongdeh", "hongdae"],
+  ["myungdong", "myeongdong"],
+  ["meyongdong", "myeongdong"],
+]);
+
+function correctQuery(query) {
+  const corrections = [];
+  const corrected = normalize(query)
+    .split(" ")
+    .map((token) => {
+      const correction = spellingCorrections.get(token);
+      if (correction && correction !== token) {
+        corrections.push(`${token} → ${correction}`);
+        return correction;
+      }
+      return token;
+    })
+    .join(" ");
+
+  return {
+    query: corrected || query,
+    corrections,
+  };
+}
+
+function matchingTerms(source, termList) {
+  return termList.filter((item) => source.includes(item.test)).flatMap((item) => item.terms);
+}
+
+function unique(values) {
+  return Array.from(new Set(values.filter(Boolean)));
+}
+
+function parseSearchIntent(query) {
+  const correction = correctQuery(query);
+  const normalized = correction.query;
+  const areas = unique(matchingTerms(normalized, areaTerms));
+  const categories = unique(matchingTerms(normalized, categoryTerms));
+  const specificCategories = categories.filter((term) => !["맛집", "식당"].includes(term));
+  const genericCategories = categories.filter((term) => ["맛집", "식당"].includes(term));
+
+  return {
+    originalQuery: query,
+    correctedQuery: normalized,
+    corrections: correction.corrections,
+    areas,
+    specificCategories,
+    genericCategories,
+  };
+}
+
+function buildSearchQueries(intent, limit = 10) {
+  const queries = [];
+  const areas = intent.areas.length ? intent.areas : [""];
+  const categories = intent.specificCategories.length
+    ? intent.specificCategories
+    : intent.genericCategories.length
+      ? intent.genericCategories
+      : [];
+
+  areas.forEach((area) => {
+    categories.forEach((category) => {
+      queries.push(`${area} ${category}`.trim());
+    });
+  });
+
+  if (!intent.specificCategories.length && intent.areas.length) {
+    intent.areas.forEach((area) => queries.push(`${area} 맛집`));
+  }
+
+  queries.push(intent.correctedQuery);
+
+  if (intent.specificCategories.length && intent.areas.length) {
+    intent.areas.forEach((area) => queries.push(`${area} 맛집`));
+  }
+
+  return unique(queries).slice(0, limit);
+}
+
+function expandQuery(query) {
+  const intent = parseSearchIntent(query);
+  const normalized = intent.correctedQuery;
+  const expansions = new Set([normalized, ...buildSearchQueries(intent)]);
+
+  synonymMap.forEach((values, key) => {
+    if (normalized.includes(key)) {
+      values.forEach((value) => expansions.add(normalized.replace(key, value)));
+      values.forEach((value) => expansions.add(value));
+    }
+  });
+
+  intent.areas.forEach((area) => {
+    const categories = intent.specificCategories.length ? intent.specificCategories : intent.genericCategories;
+    categories.forEach((category) => {
+      expansions.add(`${area} ${category}`);
+    });
+  });
+
+  return Array.from(expansions).filter(Boolean);
+}
+
+function scorePlace(place, query) {
+  const normalized = normalize(query);
+  const expanded = expandQuery(query);
+  const searchable = [
+    place.englishName,
+    place.koreanName,
+    place.category,
+    place.area,
+    ...place.keywords,
+  ]
+    .map(normalize)
+    .join(" ");
+
+  let score = 0;
+
+  if (searchable.includes(normalized)) score += 80;
+  expanded.forEach((term) => {
+    if (searchable.includes(term)) score += 32;
+  });
+
+  normalized.split(" ").forEach((token) => {
+    if (token.length > 1 && searchable.includes(token)) score += 12;
+  });
+
+  if (score > 0) {
+    score += Math.min(place.reviews / 500, 18);
+    if (place.rating) score += place.rating * 2;
+    if (place.waitlistGrade === "A") score += 4;
+    if (place.waitlistGrade === "B") score += 2;
+  }
+
+  return score;
+}
+
+function searchPlaces(query, limit = 3) {
+  return places
+    .map((place) => ({ place, score: scorePlace(place, query) }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((item) => item.place);
+}
+
+function shouldPreferKnownTransitPlace(query) {
+  const normalized = normalize(query);
+  return ["station", "exit", "airport", "terminal", "역", "출구", "공항", "터미널"].some((term) =>
+    normalized.includes(term)
+  );
+}
+
+function stripHtml(value) {
+  const template = document.createElement("template");
+  template.innerHTML = value || "";
+  return template.content.textContent || "";
+}
+
+function mapNaverItem(item, index) {
+  const title = stripHtml(item.title);
+  const category = stripHtml(item.category || "Place");
+  const roadAddress = stripHtml(item.roadAddress || item.address || "");
+  const lat = item.mapy ? Number(item.mapy) / 10000000 : null;
+  const lng = item.mapx ? Number(item.mapx) / 10000000 : null;
+
+  return {
+    id: `naver-${item.mapx || "x"}-${item.mapy || "y"}-${index}`,
+    englishName: title,
+    koreanName: title,
+    category,
+    area: roadAddress || "Naver local result",
+    lat,
+    lng,
+    reviews: 0,
+    rating: null,
+    waitlistGrade: "Unknown",
+    keywords: [title, roadAddress, category].filter(Boolean),
+  };
+}
+
+async function searchNaverLocal(query, limit = 5) {
+  const data = await requestJson(`${apiBase}/api/naver/local?query=${encode(query)}&display=${limit}`);
+  return (data.items || [])
+    .map(mapNaverItem)
+    .filter((place) => Number.isFinite(place.lat) && Number.isFinite(place.lng));
+}
+
+function requestJson(url) {
+  if (typeof window.fetch === "function") {
+    return window.fetch(url).then((response) => {
+      if (!response.ok) {
+        throw new Error(`Request returned ${response.status}`);
+      }
+      return response.json();
+    });
+  }
+
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("GET", url, true);
+    request.onload = () => {
+      if (request.status < 200 || request.status >= 300) {
+        reject(new Error(`Request returned ${request.status}`));
+        return;
+      }
+
+      try {
+        resolve(JSON.parse(request.responseText));
+      } catch (error) {
+        reject(error);
+      }
+    };
+    request.onerror = () => reject(new Error("Network request failed"));
+    request.send();
+  });
+}
+
+async function resolvePlaces(query, limit = 5) {
+  const knownMatches = searchPlaces(query, limit);
+
+  if (shouldPreferKnownTransitPlace(query) && knownMatches.length) {
+    return {
+      places: knownMatches,
+      queries: expandQuery(query),
+      live: false,
+    };
+  }
+
+  try {
+    const liveResult = await searchNaverLocalExpanded(query, limit);
+    if (liveResult.places.length) {
+      return {
+        places: liveResult.places,
+        queries: liveResult.queries,
+        corrections: liveResult.corrections || [],
+        live: true,
+      };
+    }
+  } catch {
+    // Fall back to bundled sample data when the local API server is not available.
+  }
+
+  return {
+    places: knownMatches,
+    queries: expandQuery(query),
+    corrections: correctQuery(query).corrections,
+    live: false,
+  };
+}
+
+async function searchNaverLocalExpanded(query, limit = 5) {
+  const intent = parseSearchIntent(query);
+  const seenQueries = buildSearchQueries(intent, 8);
+  const seenPlaces = new Set();
+  const results = [];
+
+  for (const [queryIndex, candidateQuery] of seenQueries.entries()) {
+    let places = [];
+    try {
+      places = await searchNaverLocal(candidateQuery, Math.min(limit, 3));
+    } catch {
+      continue;
+    }
+
+    places.forEach((place) => {
+      const key = `${place.koreanName}-${place.lat}-${place.lng}`;
+      if (!seenPlaces.has(key)) {
+        seenPlaces.add(key);
+        results.push({
+          ...place,
+          matchScore: scoreNaverPlace(place, intent, queryIndex),
+          sourceQuery: candidateQuery,
+        });
+      }
+    });
+  }
+
+  return {
+    places: results.sort((a, b) => b.matchScore - a.matchScore).slice(0, limit),
+    queries: seenQueries,
+    corrections: intent.corrections,
+  };
+}
+
+function scoreNaverPlace(place, intent, queryIndex) {
+  const text = `${place.koreanName} ${place.category} ${place.area}`;
+  let score = 100 - queryIndex * 8;
+
+  intent.specificCategories.forEach((term) => {
+    if (text.includes(term)) score += 35;
+  });
+
+  intent.areas.forEach((area) => {
+    if (text.includes(area.replace("역", ""))) score += 24;
+  });
+
+  if (intent.specificCategories.length && /카페|커피|고기|삼겹살|한우|치킨|감자탕/.test(text)) {
+    const categoryText = intent.specificCategories.join(" ");
+    if (!categoryText.includes("카페") && text.includes("카페")) score -= 30;
+    if (!categoryText.includes("고기") && !categoryText.includes("삼겹살") && /고기|삼겹살|한우/.test(text)) score -= 20;
+  }
+
+  return score;
+}
+
+function routeLink(start, destination, mode) {
+  const action = mode === "walk" ? "walk" : mode === "car" ? "car" : "public";
+  const params = new URLSearchParams({
+    slat: start.lat,
+    slng: start.lng,
+    sname: start.koreanName,
+    dlat: destination.lat,
+    dlng: destination.lng,
+    dname: destination.koreanName,
+    appname: appName,
+  });
+
+  return `nmap://route/${action}?${params.toString()}`;
+}
+
+function androidIntentLink(nmapUrl) {
+  const withoutScheme = nmapUrl.replace("nmap://", "");
+  return `intent://${withoutScheme}#Intent;scheme=nmap;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;package=com.nhn.android.nmap;end`;
+}
+
+function placeLink(place) {
+  const params = new URLSearchParams({
+    lat: place.lat,
+    lng: place.lng,
+    name: place.koreanName,
+    appname: appName,
+  });
+
+  return `nmap://place?${params.toString()}`;
+}
+
+function naverWebSearchLink(place) {
+  return `https://map.naver.com/p/search/${encode(place.koreanName)}`;
+}
+
+function naverWebRouteLink(start, destination) {
+  return `https://map.naver.com/p/directions/${start.lng},${start.lat},${encode(start.koreanName)},PLACE_POI/${destination.lng},${destination.lat},${encode(destination.koreanName)},PLACE_POI/-/transit`;
+}
+
+function currentNaverUrl(nmapUrl) {
+  return /Android/i.test(navigator.userAgent) ? androidIntentLink(nmapUrl) : nmapUrl;
+}
+
+function gradeClass(grade) {
+  if (grade === "A") return "grade-a";
+  if (grade === "B") return "grade-b";
+  if (grade === "C") return "grade-c";
+  if (grade === "D") return "grade-d";
+  return "";
+}
+
+function gradeLabel(grade) {
+  const labels = {
+    A: "Easy waitlist",
+    B: "Possible",
+    C: "Hard",
+    D: "Not tourist-friendly",
+    Unknown: "Waitlist unknown",
+  };
+  return labels[grade] || labels.Unknown;
+}
+
+function isMobileBrowser() {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+function openNaver(url, fallbackUrl) {
+  if (!isMobileBrowser()) {
+    window.location.href = fallbackUrl;
+    return;
+  }
+
+  window.location.href = currentNaverUrl(url);
+
+  window.setTimeout(() => {
+    showToast("If the app did not open, use Web Map.");
+  }, 900);
+}
+
+function placeCard(place, options = {}) {
+  const reviews = place.reviews ? `${place.reviews.toLocaleString()} reviews` : "Local place";
+  const rating = place.rating ? `${place.rating.toFixed(1)} rating` : place.area;
+  const canOpenNaverApp = Number.isFinite(place.lat) && Number.isFinite(place.lng);
+  const openUrl = options.routeFrom && canOpenNaverApp ? routeLink(options.routeFrom, place, activeMode) : placeLink(place);
+  const webUrl = options.routeFrom && canOpenNaverApp ? naverWebRouteLink(options.routeFrom, place) : naverWebSearchLink(place);
+
+  const article = document.createElement("article");
+  article.className = "result-card";
+  article.innerHTML = `
+    <div class="result-top">
+      <div>
+        <h3>${place.englishName}</h3>
+        <p class="korean-name">${place.koreanName}</p>
+      </div>
+      <span class="pill ${gradeClass(place.waitlistGrade)}">${gradeLabel(place.waitlistGrade)}</span>
+    </div>
+    <div class="meta-row">
+      <span class="pill">${place.category}</span>
+      <span class="pill">${place.area}</span>
+      <span class="pill">${rating}</span>
+      <span class="pill">${reviews}</span>
+    </div>
+    <div class="card-actions">
+      <button class="open-link" type="button"${canOpenNaverApp ? "" : " disabled"}>Open App</button>
+      <button class="web-link" type="button">Web Map</button>
+      ${options.allowGoHere ? '<button class="route-link" type="button">Go here</button>' : ""}
+      <button class="save-link" type="button">Save</button>
+    </div>
+  `;
+
+  article.querySelector(".open-link").addEventListener("click", () => openNaver(openUrl, webUrl));
+  article.querySelector(".web-link").addEventListener("click", () => {
+    window.location.href = webUrl;
+  });
+  article.querySelector(".route-link")?.addEventListener("click", () => {
+    $("#toInput").value = place.koreanName;
+    routePreferenceQuery = place.sourceQuery || place.koreanName;
+    switchTab("go");
+    renderRouteResults();
+  });
+  article.querySelector(".save-link").addEventListener("click", () => savePlace(place));
+
+  return article;
+}
+
+function inferAreaQuery(place) {
+  const source = `${place.koreanName} ${place.area}`;
+  const knownAreas = ["성수", "성수동", "홍대", "홍대입구", "명동", "강남", "이태원", "연남", "합정", "잠실", "을지로", "종로"];
+  return knownAreas.find((area) => source.includes(area)) || place.koreanName;
+}
+
+async function renderRouteResults() {
+  const requestId = ++routeRequestId;
+  const fromQuery = $("#fromInput").value;
+  const toQuery = $("#toInput").value;
+  const container = $("#routeResults");
+  container.innerHTML = "";
+
+  if (!fromQuery || !toQuery) {
+    container.append(hint("Add both a starting point and destination."));
+    return;
+  }
+
+  container.append(hint("Finding live NAVER map matches..."));
+
+  const [startResult, destinationResult] = await Promise.all([
+    resolvePlaces(fromQuery, 3),
+    resolvePlaces(toQuery, 3),
+  ]);
+
+  if (requestId !== routeRequestId) return;
+
+  const startMatches = startResult.places;
+  const destinationMatches = destinationResult.places;
+  container.innerHTML = "";
+
+  if (!startMatches.length || !destinationMatches.length) {
+    container.append(hint("No confident NAVER match yet. Try adding the area, like Hongdae, Seongsu, or Myeongdong."));
+    return;
+  }
+
+  const start = startMatches[0];
+  const destination = destinationMatches[0];
+  container.append(hint(`Route matched with NAVER: ${start.koreanName} → ${destination.koreanName}`));
+  const destinationIntent = parseSearchIntent(routePreferenceQuery || toQuery);
+  if (destinationIntent.corrections.length) {
+    container.append(hint(`Corrected likely typo: ${destinationIntent.corrections.join(", ")}. Searching with the corrected term.`));
+  }
+  destinationMatches.forEach((place) => container.append(placeCard(place, { routeFrom: start })));
+
+  const areaQuery = destinationIntent.areas[0] || inferAreaQuery(destination);
+  const destinationCategory = destinationIntent.specificCategories[0];
+  const recommendationQuery = destinationCategory ? `${areaQuery} ${destinationCategory}` : `${areaQuery} 맛집`;
+  const recommendationResult = await resolvePlaces(recommendationQuery, 5);
+
+  if (requestId !== routeRequestId) return;
+
+  if (recommendationResult.places.length) {
+    container.append(hint(`Recommended near ${areaQuery} from NAVER: ${recommendationQuery}`));
+    recommendationResult.places.forEach((place) => container.append(placeCard(place)));
+  }
+}
+
+async function renderFindResults() {
+  const requestId = ++findRequestId;
+  const query = $("#findInput").value;
+  const container = $("#findResults");
+  container.innerHTML = "";
+
+  if (!query) {
+    container.append(hint("Search for a restaurant, station exit, cafe, market, or landmark."));
+    return;
+  }
+
+  container.append(hint("Finding the Korean place name..."));
+
+  const result = await resolvePlaces(query, 5);
+
+  if (requestId !== findRequestId) return;
+
+  let matches = result.places;
+  const liveQueries = result.queries;
+  const corrections = result.corrections || [];
+  liveSearchAvailable = result.live;
+  $("#apiNote").textContent = liveSearchAvailable
+    ? "Live NAVER local search is connected."
+    : "Using sample fallback. Start the local server for live NAVER Search.";
+
+  container.innerHTML = "";
+
+  if (!matches.length) {
+    matches = searchPlaces(query, 5);
+    if (!matches.length) {
+      container.append(hint("No local match yet. Try adding the area, like Hongdae, Seongsu, or Myeongdong."));
+      return;
+    }
+  }
+
+  const expansions = expandQuery(query).slice(0, 4).join(" · ");
+  const liveCopy = liveQueries.length ? `Live NAVER results using: ${liveQueries.slice(0, 3).join(" · ")}` : "Live NAVER local results";
+  if (corrections.length) {
+    container.append(hint(`Corrected likely typo: ${corrections.join(", ")}. Searching with the corrected term.`));
+  }
+  container.append(hint(liveSearchAvailable ? liveCopy : `Korean search ideas: ${expansions}`));
+  matches.forEach((place) => container.append(placeCard(place, { allowGoHere: true })));
+}
+
+function debounce(callback, delay = 650) {
+  let timeoutId;
+  return (...args) => {
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(() => callback(...args), delay);
+  };
+}
+
+function bindSearchInput(input, callback) {
+  const debounced = debounce(callback);
+  const runSoon = () => {
+    debounced();
+  };
+
+  input.addEventListener("input", runSoon);
+  input.addEventListener("change", callback);
+  input.addEventListener("search", callback);
+  input.addEventListener("keyup", runSoon);
+}
+
+function hint(text) {
+  const p = document.createElement("p");
+  p.className = "hint";
+  p.textContent = text;
+  return p;
+}
+
+function getSaved() {
+  try {
+    return JSON.parse(localStorage.getItem("bridge-seoul-saved") || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function setSaved(saved) {
+  localStorage.setItem("bridge-seoul-saved", JSON.stringify(saved));
+}
+
+function savePlace(place) {
+  const saved = getSaved();
+  if (!saved.some((item) => item.id === place.id)) {
+    saved.unshift(place);
+    setSaved(saved);
+  }
+  renderSaved();
+  showToast("Saved on this device");
+}
+
+function renderSaved() {
+  const container = $("#savedResults");
+  const saved = getSaved();
+  container.innerHTML = "";
+
+  if (!saved.length) {
+    container.append(hint("Saved places will appear here. Try saving your hotel, airport, or a restaurant."));
+    return;
+  }
+
+  saved.forEach((place) => container.append(placeCard(place)));
+}
+
+function showToast(message) {
+  const toast = $("#toast");
+  toast.textContent = message;
+  toast.classList.add("is-visible");
+  window.clearTimeout(showToast.timeoutId);
+  showToast.timeoutId = window.setTimeout(() => toast.classList.remove("is-visible"), 2200);
+}
+
+function switchTab(tabName) {
+  $$(".tab").forEach((tab) => tab.classList.toggle("is-active", tab.dataset.tab === tabName));
+  $$(".panel").forEach((panel) => panel.classList.remove("is-active"));
+  $(`#${tabName}Panel`).classList.add("is-active");
+}
+
+function init() {
+  $$(".tab").forEach((tab) => {
+    tab.addEventListener("click", () => switchTab(tab.dataset.tab));
+  });
+
+  $$(".mode").forEach((mode) => {
+    mode.addEventListener("click", () => {
+      activeMode = mode.dataset.mode;
+      $$(".mode").forEach((item) => item.classList.toggle("is-active", item === mode));
+      if ($("#goPanel").classList.contains("is-active") && $("#routeResults").children.length) {
+        renderRouteResults();
+      }
+    });
+  });
+
+  $("#swapButton").addEventListener("click", () => {
+    const from = $("#fromInput").value;
+    $("#fromInput").value = $("#toInput").value;
+    $("#toInput").value = from;
+    renderRouteResults();
+  });
+
+  const routeInputHandler = () => {
+    routePreferenceQuery = "";
+    routeRequestId += 1;
+    $("#routeResults").innerHTML = "";
+    $("#routeResults").append(hint("Updating route with your latest input..."));
+    renderRouteResults();
+  };
+
+  const findInputHandler = () => {
+    findRequestId += 1;
+    $("#findResults").innerHTML = "";
+    $("#findResults").append(hint("Updating local search..."));
+    renderFindResults();
+  };
+
+  bindSearchInput($("#fromInput"), routeInputHandler);
+  bindSearchInput($("#toInput"), routeInputHandler);
+  bindSearchInput($("#findInput"), findInputHandler);
+
+  $("#buildRouteButton").addEventListener("click", renderRouteResults);
+  $("#findButton").addEventListener("click", renderFindResults);
+  $("#clearSavedButton").addEventListener("click", () => {
+    setSaved([]);
+    renderSaved();
+    showToast("Saved places cleared");
+  });
+  $("#profileButton").addEventListener("click", () => {
+    showToast("Sign-in can sync saved places later");
+  });
+
+  renderRouteResults();
+  renderFindResults();
+  renderSaved();
+}
+
+init();
+
+# Deployment Guide
+
+Bridge Seoul is a static frontend plus a small Python API proxy.
+
+Important:
+
+- Never put `NAVER_SEARCH_CLIENT_SECRET` in `index.html` or `app.js`.
+- Browser code calls `/api/naver/local`.
+- `server.py` calls NAVER Search API with server-side environment variables.
+- Add your deployed site URL to NAVER Developers `WEB 설정`.
+
+## Recommended Hosting
+
+Use a Python web host such as Render, Railway, or Fly.io. Render is the simplest for this prototype.
+
+## Render Setup
+
+1. Push this folder to GitHub.
+2. Create a new Render `Web Service`.
+3. Connect the GitHub repo.
+4. Use this start command:
+
+```bash
+python3 server.py
+```
+
+5. Add environment variables:
+
+```text
+HOST=0.0.0.0
+NAVER_SEARCH_CLIENT_ID=your_client_id
+NAVER_SEARCH_CLIENT_SECRET=your_client_secret
+```
+
+6. After deployment, copy the Render URL.
+
+Example:
+
+```text
+https://bridge-seoul.onrender.com
+```
+
+7. In NAVER Developers, add that URL under `비로그인 오픈 API 서비스 환경 > WEB 설정`.
+
+8. Test the deployed app:
+
+```text
+https://your-site.onrender.com/health
+https://your-site.onrender.com
+```
+
+9. Test NAVER local search through the deployed backend:
+
+```text
+https://your-site.onrender.com/api/naver/local?query=강남%20초밥&display=2
+```
+
+## NAVER Developers Settings
+
+For this prototype:
+
+- Select API: `검색`
+- Service environment: `WEB 설정`
+- Local test URL: `http://127.0.0.1:8787`
+- Production URL: your deployed site URL
+
+Do not enable NAVER Login yet.
+
+Do not check personal data permissions such as:
+
+- 회원이름
+- 연락처 이메일 주소
+- 휴대전화번호
+- 프로필 사진
+
+## Sensitive User Data
+
+The current prototype does not store personal data on the server.
+
+Safe user-entered fields for now:
+
+- Hotel/place name
+- Start point
+- Destination
+- Saved places stored locally in the browser
+
+If account sync is added later, the product will need:
+
+- Privacy policy
+- Data deletion flow
+- Clear consent before cloud sync
+
+## Important Before Public Sharing
+
+The current NAVER Client Secret was pasted into chat during local setup. Before making the site public:
+
+1. Go to NAVER Developers.
+2. Open the app.
+3. Click `재발급` for Client Secret.
+4. Update the hosting provider environment variable.
+5. Do not put the secret in frontend code.
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bridge Seoul</title>
+    <script>
+      if (window.location.protocol === "file:") {
+        window.location.replace("http://127.0.0.1:8787/?from=file&v=" + Date.now());
+      }
+    </script>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="top-bar">
+        <div>
+          <p class="eyebrow">Seoul local bridge</p>
+          <h1>Bridge Seoul</h1>
+        </div>
+        <button class="icon-button" id="profileButton" aria-label="Profile">
+          <span aria-hidden="true">◎</span>
+        </button>
+      </section>
+
+      <section class="status-strip" aria-label="Service status">
+        <div>
+          <strong>English in</strong>
+          <span>Korean place candidates out</span>
+        </div>
+        <div>
+          <strong>Naver Map</strong>
+          <span>Deep links ready</span>
+        </div>
+      </section>
+
+      <nav class="tabs" aria-label="Main tabs">
+        <button class="tab is-active" data-tab="go" type="button">Go</button>
+        <button class="tab" data-tab="find" type="button">Find</button>
+        <button class="tab" data-tab="saved" type="button">Saved</button>
+      </nav>
+
+      <section class="panel is-active" id="goPanel" aria-labelledby="goTab">
+        <div class="route-card">
+          <label class="field">
+            <span>From</span>
+            <input id="fromInput" type="search" autocomplete="off" value="Hongdae Station Exit 6" />
+          </label>
+          <button class="swap-button" id="swapButton" type="button" aria-label="Swap from and to">↕</button>
+          <label class="field">
+            <span>To</span>
+            <input id="toInput" type="search" autocomplete="off" value="Myeongdong Kyoja" />
+          </label>
+        </div>
+
+        <div class="mode-row" aria-label="Travel mode">
+          <button class="mode is-active" data-mode="public" type="button">Transit</button>
+          <button class="mode" data-mode="walk" type="button">Walk</button>
+          <button class="mode" data-mode="car" type="button">Taxi</button>
+        </div>
+
+        <button class="primary-action" id="buildRouteButton" type="button">Find Korean matches</button>
+
+        <section class="results" id="routeResults" aria-live="polite"></section>
+      </section>
+
+      <section class="panel" id="findPanel" aria-labelledby="findTab">
+        <label class="field search-field">
+          <span>Search in English</span>
+          <input id="findInput" type="search" autocomplete="off" value="sushi restaurant near gangnam" />
+        </label>
+        <button class="primary-action" id="findButton" type="button">Search local places</button>
+        <p class="api-note" id="apiNote">Using sample data until NAVER Search API keys are configured.</p>
+        <section class="results" id="findResults" aria-live="polite"></section>
+      </section>
+
+      <section class="panel" id="savedPanel" aria-labelledby="savedTab">
+        <div class="saved-header">
+          <div>
+            <h2>Saved places</h2>
+            <p>Stored on this device. Sign-in sync can come next.</p>
+          </div>
+          <button class="secondary-action" id="clearSavedButton" type="button">Clear</button>
+        </div>
+        <section class="results" id="savedResults" aria-live="polite"></section>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="./app.js?v=20260529-1635"></script>
+  </body>
+</html>
+
+web: python3 server.py
+
+# Bridge Seoul
+
+Bridge Seoul helps foreign visitors search Korean local places in English, converts intent into Korean NAVER local search queries, and opens the result in NAVER Map.
+
+## Local Run
+
+Create `.env`:
+
+```env
+NAVER_SEARCH_CLIENT_ID=your_client_id
+NAVER_SEARCH_CLIENT_SECRET=your_client_secret
+PORT=8787
+HOST=127.0.0.1
+```
+
+Run:
+
+```bash
+set -a
+source .env
+set +a
+python3 server.py
+```
+
+Open:
+
+```text
+http://127.0.0.1:8787
+```
+
+## External Deployment
+
+Use a server host such as Render, Railway, or Fly.io. Static-only hosts will not work by themselves because NAVER Search API needs a server-side secret.
+
+Required environment variables:
+
+```text
+HOST=0.0.0.0
+NAVER_SEARCH_CLIENT_ID=your_client_id
+NAVER_SEARCH_CLIENT_SECRET=your_client_secret
+```
+
+Render can use `render.yaml` directly.
+
+Health check:
+
+```text
+/health
+```
+
+## Security
+
+Do not commit `.env`.
+
+The current NAVER Client Secret was exposed in chat during setup. Regenerate it in NAVER Developers before public deployment.
+
+services:
+  - type: web
+    name: bridge-seoul
+    env: python
+    plan: free
+    buildCommand: ""
+    startCommand: "python3 server.py"
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: NAVER_SEARCH_CLIENT_ID
+        sync: false
+      - key: NAVER_SEARCH_CLIENT_SECRET
+        sync: false
+
+#!/usr/bin/env python3
+import json
+import os
+import urllib.parse
+import urllib.request
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+
+
+PORT = int(os.getenv("PORT", "8787"))
+HOST = os.getenv("HOST", "127.0.0.1")
+CLIENT_ID = os.getenv("NAVER_SEARCH_CLIENT_ID", "")
+CLIENT_SECRET = os.getenv("NAVER_SEARCH_CLIENT_SECRET", "")
+
+
+class BridgeHandler(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Cache-Control", "no-store, max-age=0")
+        super().end_headers()
+
+    def end_json(self, status, payload):
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.end_headers()
+
+    def do_GET(self):
+        parsed = urllib.parse.urlparse(self.path)
+
+        if parsed.path == "/health":
+            self.end_json(200, {"status": "ok"})
+            return
+
+        if parsed.path != "/api/naver/local":
+            return super().do_GET()
+
+        if not CLIENT_ID or not CLIENT_SECRET:
+            self.end_json(
+                500,
+                {
+                    "error": "missing_naver_credentials",
+                    "message": "Set NAVER_SEARCH_CLIENT_ID and NAVER_SEARCH_CLIENT_SECRET.",
+                },
+            )
+            return
+
+        params = urllib.parse.parse_qs(parsed.query)
+        query = params.get("query", [""])[0].strip()
+        display = params.get("display", ["5"])[0]
+
+        if not query:
+            self.end_json(400, {"error": "missing_query"})
+            return
+
+        api_query = urllib.parse.urlencode({"query": query, "display": display, "sort": "comment"})
+        request = urllib.request.Request(
+            f"https://openapi.naver.com/v1/search/local.json?{api_query}",
+            headers={
+                "X-Naver-Client-Id": CLIENT_ID,
+                "X-Naver-Client-Secret": CLIENT_SECRET,
+            },
+        )
+
+        try:
+            with urllib.request.urlopen(request, timeout=6) as response:
+                raw = response.read().decode("utf-8")
+                data = json.loads(raw)
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace")
+            self.end_json(exc.code, {"error": "naver_api_error", "detail": detail})
+            return
+        except Exception as exc:
+            self.end_json(502, {"error": "naver_request_failed", "detail": str(exc)})
+            return
+
+        self.end_json(200, data)
+
+
+if __name__ == "__main__":
+    server = ThreadingHTTPServer((HOST, PORT), BridgeHandler)
+    print(f"Bridge Seoul running at http://{HOST}:{PORT}")
+    server.serve_forever()
+
+:root {
+  color-scheme: light;
+  --bg: #f5f7f8;
+  --surface: #ffffff;
+  --surface-strong: #eef6f2;
+  --text: #17201c;
+  --muted: #66736d;
+  --line: #dce4e0;
+  --brand: #03c75a;
+  --brand-dark: #029447;
+  --blue: #2675d9;
+  --amber: #be7b00;
+  --red: #c84436;
+  --shadow: 0 18px 48px rgba(27, 38, 33, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(3, 199, 90, 0.08), rgba(245, 247, 248, 0) 34%),
+    var(--bg);
+  color: var(--text);
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.app-shell {
+  width: min(100%, 480px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 22px 16px 28px;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 2px 18px;
+}
+
+.eyebrow {
+  margin: 0 0 3px;
+  color: var(--brand-dark);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h1,
+h2 {
+  margin: 0;
+  letter-spacing: 0;
+}
+
+h1 {
+  font-size: 30px;
+  line-height: 1.05;
+}
+
+h2 {
+  font-size: 18px;
+}
+
+.icon-button {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 22px;
+  box-shadow: 0 8px 22px rgba(27, 38, 33, 0.08);
+}
+
+.status-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.status-strip div {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.status-strip strong,
+.status-strip span {
+  display: block;
+}
+
+.status-strip strong {
+  font-size: 13px;
+}
+
+.status-strip span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #eaf0ed;
+}
+
+.tab {
+  min-height: 38px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.tab.is-active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 6px 18px rgba(27, 38, 33, 0.08);
+}
+
+.panel {
+  display: none;
+  padding-top: 16px;
+}
+
+.panel.is-active {
+  display: block;
+}
+
+.route-card,
+.search-field {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.route-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.field {
+  display: block;
+  padding: 15px;
+}
+
+.field + .field {
+  border-top: 1px solid var(--line);
+}
+
+.field span {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.field input {
+  width: 100%;
+  min-height: 34px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.field input::placeholder {
+  color: #99a5a0;
+}
+
+.swap-button {
+  position: absolute;
+  top: calc(50% - 18px);
+  right: 14px;
+  z-index: 1;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface-strong);
+  color: var(--brand-dark);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.mode-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.mode {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.mode.is-active {
+  border-color: rgba(3, 199, 90, 0.45);
+  background: var(--surface-strong);
+  color: var(--brand-dark);
+}
+
+.primary-action,
+.secondary-action {
+  width: 100%;
+  min-height: 50px;
+  border: 0;
+  border-radius: 8px;
+  font-weight: 900;
+}
+
+.primary-action {
+  background: var(--brand);
+  color: white;
+  box-shadow: 0 12px 24px rgba(3, 199, 90, 0.26);
+}
+
+.secondary-action {
+  width: auto;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.results {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.api-note {
+  margin: 10px 2px 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.result-card {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.result-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.result-card h3 {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+.korean-name {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: #f1f4f3;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.grade-a {
+  background: #e8f7ef;
+  color: var(--brand-dark);
+}
+
+.grade-b {
+  background: #eef4ff;
+  color: var(--blue);
+}
+
+.grade-c {
+  background: #fff4df;
+  color: var(--amber);
+}
+
+.grade-d {
+  background: #fff0ee;
+  color: var(--red);
+}
+
+.card-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(76px, 1fr));
+  gap: 8px;
+  margin-top: 13px;
+}
+
+.card-actions button,
+.card-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.open-link {
+  border: 0;
+  background: #111d18;
+  color: #fff;
+}
+
+.save-link {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.route-link {
+  border: 1px solid rgba(3, 199, 90, 0.24);
+  background: var(--surface-strong);
+  color: var(--brand-dark);
+}
+
+.web-link {
+  border: 1px solid rgba(38, 117, 217, 0.25);
+  background: #eef4ff;
+  color: var(--blue);
+}
+
+.hint {
+  margin: 0;
+  padding: 14px;
+  border: 1px dashed #c8d3ce;
+  border-radius: 8px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.7);
+  line-height: 1.45;
+}
+
+.saved-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.saved-header p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.toast {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  left: 16px;
+  transform: translateY(120px);
+  max-width: 448px;
+  margin: 0 auto;
+  padding: 13px 14px;
+  border-radius: 8px;
+  background: #111d18;
+  color: #fff;
+  font-weight: 800;
+  text-align: center;
+  transition: transform 180ms ease;
+}
+
+.toast.is-visible {
+  transform: translateY(0);
+}
+
+@media (min-width: 700px) {
+  .app-shell {
+    padding-top: 34px;
+  }
+
+  .top-bar {
+    padding-top: 14px;
+  }
+}
